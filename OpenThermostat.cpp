@@ -4,3 +4,8 @@ OpenThermostat::OpenThermostat()
 {
 
 }
+
+void OpenThermostat::begin()
+{
+  
+}
