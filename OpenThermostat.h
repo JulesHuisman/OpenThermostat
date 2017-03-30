@@ -7,8 +7,8 @@
 #ifndef OpenThermostat_h
 #define OpenThermostat_h
 
-#include "Arduino.h"
-#include "OpenThermostatScreen.h"
+#include "Arduino.h";
+#include "OpenThermostatScreen.h";
 
 //Comment to remove debugging serial prints
 #define DEBUG
