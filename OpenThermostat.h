@@ -1,12 +1,14 @@
 /*
   Created by Daan van Driel and Jules Huisman, March 25, 2017.
   Released into the public domain.
+  V1.0
 */
 
 #ifndef OpenThermostat_h
 #define OpenThermostat_h
 
 #include "Arduino.h"
+#include "OpenThermostatScreen.h"
 
 //Comment to remove debugging serial prints
 #define DEBUG
@@ -23,8 +25,9 @@ class OpenThermostat
 {
   public:
     OpenThermostat();
+    void begin();
   private:
-    //
+    OpenThermostatScreen Screen;
 };
 
 #endif
