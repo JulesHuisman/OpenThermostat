@@ -26,8 +26,9 @@ class OpenThermostat
   public:
     OpenThermostat();
     void begin();
-  private:
     OpenThermostatScreen Screen;
+  private:
+    
 };
 
 #endif

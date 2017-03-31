@@ -2,10 +2,10 @@
 #include "OpenThermostatScreen.h";
 #include <SPI.h>;
 
-//Include the default font
-#include "include/font.h";
+//Include font and graphics
+#include "include/graphics.h";
 
-//Define the pins the screen is connected to, the rest of the pins are SPI hardware pins
+//Define the pins the screen is connected to, the other two pins are SPI hardware pins
 #define CS_PIN  15
 #define DC_PIN  5
 #define RST_PIN 0
@@ -58,47 +58,91 @@ void OpenThermostatScreen::clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 }
 
 //Create a screen with a textfield and a loading bar
-void OpenThermostatScreen::startLoadScreen(char text[])
+void OpenThermostatScreen::loadScreen(char text[])
 {
   size_t len = strlen(text);
 
+  //If load screen is already active only redraw the text
+  if (activeScreen == LOAD_SCREEN) {
+    clear(0,13,127,20);
+  } else {
+    clearAll();
+
+    loadBarWidth = 0;
+    activeScreen = LOAD_SCREEN;
+
+    //Draw the border for the loading bar
+    drawLine(14,35,114,35);
+    drawLine(114,35,114,57);
+    drawLine(14,57,114,57);
+    drawLine(14,57,14,35);
+  }
+
+  cursorX = (128-(6*len))/2; //Center the text
   cursorY = 13;
-  cursorX = (128-(6*len))/2;
 
-  for (uint8_t i = 0; i < len; i++)
-    write(text[i], 1);
+  write(text, 1);
 
-  drawLine(14,35,114,35);
-  drawLine(114,35,114,57);
-  drawLine(14,57,114,57);
-  drawLine(14,57,14,35);
   display();
 }
 
-void OpenThermostatScreen::addLoadScreen(uint8_t width)
+//Add 1 width to the right of the loading bar
+void OpenThermostatScreen::loadScreenRefresh()
 {
-  int newLoadingBarWidth = loadingBarWidth + width;
+  loadBarWidth++;
 
   //Reset the loading bar if it reaches the end
-  if (newLoadingBarWidth > 47)
+  if (loadBarWidth > 95)
   {
-    loadingBarWidth = 0;
-    newLoadingBarWidth = 0;
+    loadBarWidth = 0;
     clear(17,38,113,55);
   }
 
-  //Draw the difference it has since the last drawing
-  fillRect(17+loadingBarWidth,38,newLoadingBarWidth,17);
+  fillRect(17,38,loadBarWidth,17);
   display();
+}
 
-  //Set the loading bar to the updated value
-  loadingBarWidth = newLoadingBarWidth;
+//Draw the home screen
+void OpenThermostatScreen::homeScreen(float value)
+{
+  char valueChar[4];
+  dtostrf(value, 3, 2, valueChar);
+
+  //If home screen is already active only redraw the value
+  if (activeScreen == HOME_SCREEN) {
+    clear(0,7,127,64);
+  } else {
+    clearAll();
+
+    activeScreen = HOME_SCREEN;
+
+    //drawHeader();
+  }
+
+  cursorX = (128-(23*4))/2; //Center the text
+  cursorY = 24;
+
+  write(valueChar, 4);
+
+// ============================================== TEMP ==============================================
+
+drawChar(20,4,(char)223,1);
+
+    cursorX = 0;
+    cursorY = 2;
+
+    char temp[] = "20.4";
+    write(temp, 1);
+
+// ============================================== TEMP ==============================================
+
+  display();
 }
 
 //Draw a pixel at a x,y position
+//Color 0 = off
+//Color 1 = on
 void OpenThermostatScreen::drawPixel(int16_t x, int16_t y, uint8_t color) {
-  //screenBuffer[x+ (y/8)*128] |=  (1 << (y&7));
-
   switch (color)
   {
     case 1: screenBuffer[x+ (y/8)*128] |=  (1 << (y&7)); break;
@@ -106,7 +150,7 @@ void OpenThermostatScreen::drawPixel(int16_t x, int16_t y, uint8_t color) {
   }
 }
 
-//Updates the display and sends the buffer to the SSD1306
+//Updates the display and sends the screen buffer to the SSD1306
 void OpenThermostatScreen::display() {
   sendCommand(0x21);
   sendCommand(0);
@@ -125,21 +169,17 @@ void OpenThermostatScreen::display() {
   digitalWrite(CS_PIN, HIGH);
 }
 
-void OpenThermostatScreen::write(uint8_t c, uint8_t size) {
-  if(c == '\n') {
-    cursorY += size*8;
-    cursorX  = 0;
-  } else if(c == '\r') {
-      // skip em
-  } else {
-    drawChar(cursorX, cursorY, c, size);
+void OpenThermostatScreen::write(char text[], uint8_t size)
+{
+  for (uint8_t i = 0; i < sizeof(text); i++) {
+    drawChar(cursorX, cursorY, text[i], size);
     cursorX += size * 6;
   }
 }
 
 void OpenThermostatScreen::drawChar(int16_t x, int16_t y, unsigned char c, uint8_t size) {
 
-  if(c >= 176) c++; // Handle 'classic' charset behavior
+  if(c >= 176) c++;
 
   for(int8_t i=0; i<6; i++ ) {
       uint8_t line;
@@ -208,7 +248,7 @@ void OpenThermostatScreen::sendCommand(uint8_t byte)
   digitalWrite(DC_PIN, LOW);
   digitalWrite(CS_PIN, LOW);
 
-  (void)SPI.transfer(byte);
+  SPI.transfer(byte);
 
   digitalWrite(CS_PIN, HIGH);
 }
