@@ -7,28 +7,25 @@
 #ifndef OpenThermostat_h
 #define OpenThermostat_h
 
+#include <ESP8266WiFi.h>;
+#include <DHT.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
-
-//Comment to remove debugging serial prints
-#define DEBUG
-
-#ifdef DEBUG
-  #define DEBUG_PRINT(...) { Serial.print(__VA_ARGS__); }
-  #define DEBUG_PRINTLN(...) { Serial.println(__VA_ARGS__); }
-#else
-  #define DEBUG_PRINT(...) {}
-  #define DEBUG_PRINTLN(...) {}
-#endif
+#include "include/defines.h";
 
 class OpenThermostat
 {
   public:
     OpenThermostat();
     void begin();
-    OpenThermostatScreen Screen;
+    void run();
   private:
-    
+    void getWifiStrength();
+    void readTemperature();
+    OpenThermostatScreen Screen;
+    DHT dht;
+    float tempCorrection;
+    uint8_t tempMode;
 };
 
 #endif

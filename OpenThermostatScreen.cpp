@@ -1,14 +1,7 @@
-#include "Arduino.h";
 #include "OpenThermostatScreen.h";
-#include <SPI.h>;
 
 //Include font and graphics
 #include "include/graphics.h";
-
-//Define the pins the screen is connected to, the other two pins are SPI hardware pins
-#define CS_PIN  15
-#define DC_PIN  5
-#define RST_PIN 0
 
 #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 
@@ -20,7 +13,7 @@ OpenThermostatScreen::OpenThermostatScreen()
 
 }
 
-//Sets up the SPI connecting and sends the initialization bytes to the SSD1306
+//Sets up the SPI connection and sends the initialization bytes to the SSD1306
 void OpenThermostatScreen::begin()
 {
   //The commands to send to the SSD1306 on startup
@@ -42,10 +35,10 @@ void OpenThermostatScreen::begin()
     sendCommand(initCommandArray[i]);
 }
 
+//Clear the whole screen
 void OpenThermostatScreen::clearAll()
 {
-  clear(0,0,128,64);
-  DEBUG_PRINTLN(F("Clear whole screen"));
+  clear(0,0,127,63);
 }
 
 void OpenThermostatScreen::clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
@@ -66,10 +59,10 @@ void OpenThermostatScreen::loadScreen(char text[])
   if (activeScreen == LOAD_SCREEN) {
     clear(0,13,127,20);
   } else {
-    clearAll();
-
-    loadBarWidth = 0;
     activeScreen = LOAD_SCREEN;
+    loadBarWidth = 0;
+
+    clearAll();
 
     //Draw the border for the loading bar
     drawLine(14,35,114,35);
@@ -81,7 +74,7 @@ void OpenThermostatScreen::loadScreen(char text[])
   cursorX = (128-(6*len))/2; //Center the text
   cursorY = 13;
 
-  write(text, 1);
+  write(text, len, 1);
 
   display();
 }
@@ -105,38 +98,50 @@ void OpenThermostatScreen::loadScreenRefresh()
 //Draw the home screen
 void OpenThermostatScreen::homeScreen(float value)
 {
-  char valueChar[4];
-  dtostrf(value, 3, 2, valueChar);
+  uint8_t valueLen;
+
+  if (value < 10) valueLen = 3;
+  else if (value >= 10 || value < 0) valueLen = 4;
+
+  char valueChar[valueLen];
+  dtostrf(value, valueLen, 1, valueChar);
+
+  size_t len = strlen(valueChar);
 
   //If home screen is already active only redraw the value
   if (activeScreen == HOME_SCREEN) {
-    clear(0,7,127,64);
+    clear(0,18,113,64);
   } else {
-    clearAll();
-
     activeScreen = HOME_SCREEN;
+    sidebarIcons[1] = UPDATE_ICON;
 
-    //drawHeader();
+    clearAll();
+    drawSidebar();
   }
 
-  cursorX = (128-(23*4))/2; //Center the text
-  cursorY = 24;
+  cursorX = 15+(8*(4-valueLen));
+  cursorY = 18;
 
-  write(valueChar, 4);
-
-// ============================================== TEMP ==============================================
-
-drawChar(20,4,(char)223,1);
-
-    cursorX = 0;
-    cursorY = 2;
-
-    char temp[] = "20.4";
-    write(temp, 1);
-
-// ============================================== TEMP ==============================================
+  write(valueChar, len, 4);
 
   display();
+}
+
+void OpenThermostatScreen::drawSidebar()
+{
+  //Only draw the sidebar if the homescreen is active
+  if (activeScreen != HOME_SCREEN) return;
+
+  //Clear the sidebar
+  clear(113,0,127,63);
+
+  for (uint8_t i = 0; i < 3; i++)
+  {
+    if (sidebarIcons[i] > 0)
+    {
+      drawIcon(113,(i*22),sidebarIcons[i],2);
+    }
+  }
 }
 
 //Draw a pixel at a x,y position
@@ -147,6 +152,18 @@ void OpenThermostatScreen::drawPixel(int16_t x, int16_t y, uint8_t color) {
   {
     case 1: screenBuffer[x+ (y/8)*128] |=  (1 << (y&7)); break;
     case 0: screenBuffer[x+ (y/8)*128] &= ~(1 << (y&7)); break;
+  }
+}
+
+void OpenThermostatScreen::drawIcon(int16_t x, int16_t y, uint8_t icon, uint8_t size) {
+  for(int8_t i=0; i<7; i++ ) {
+      uint8_t line = pgm_read_byte(icons+((icon-1)*7)+i);
+      for(int8_t j=0; j<8; j++, line >>= 1) {
+        if(line & 0x1) {
+          if(size == 1) drawPixel(x+i, y+j, 1);
+          else          fillRect(x+(i*size), y+(j*size), size, size);
+        }
+      }
   }
 }
 
@@ -169,17 +186,20 @@ void OpenThermostatScreen::display() {
   digitalWrite(CS_PIN, HIGH);
 }
 
-void OpenThermostatScreen::write(char text[], uint8_t size)
+void OpenThermostatScreen::write(char text[], uint8_t length, uint8_t size)
 {
-  for (uint8_t i = 0; i < sizeof(text); i++) {
+  for (uint8_t i = 0; i < length; i++) {
+    //Shift the characters if there is a dot or comma (saves space)
+    if (text[i] == '.' || text[i] == ',' || text[i-1] == '.' || text[i-1] == ',' )
+    {
+      cursorX -= size;
+    }
     drawChar(cursorX, cursorY, text[i], size);
     cursorX += size * 6;
   }
 }
 
 void OpenThermostatScreen::drawChar(int16_t x, int16_t y, unsigned char c, uint8_t size) {
-
-  if(c >= 176) c++;
 
   for(int8_t i=0; i<6; i++ ) {
       uint8_t line;

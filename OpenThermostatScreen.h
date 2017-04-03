@@ -10,22 +10,9 @@
 #ifndef OpenThermostatScreen_h
 #define OpenThermostatScreen_h
 
+#include <SPI.h>;
 #include "Arduino.h";
-
-#define LOAD_SCREEN 1
-#define HOME_SCREEN 2
-#define MENU_SCREEN 3
-
-//Comment to remove debugging serial prints
-#define DEBUG
-
-#ifdef DEBUG
-  #define DEBUG_PRINT(...) { Serial.print(__VA_ARGS__); }
-  #define DEBUG_PRINTLN(...) { Serial.println(__VA_ARGS__); }
-#else
-  #define DEBUG_PRINT(...) {}
-  #define DEBUG_PRINTLN(...) {}
-#endif
+#include "include/defines.h";
 
 class OpenThermostatScreen
 {
@@ -36,12 +23,15 @@ class OpenThermostatScreen
     void loadScreen(char text[]);
     void loadScreenRefresh();
     void homeScreen(float value);
+    void drawSidebar();
     void clearAll();
     void clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
-    uint8_t activeScreen; //The active screen
+    uint8_t activeScreen;
+    uint8_t sidebarIcons[3];
   private:
-    void write(char text[], uint8_t size);
+    void write(char text[], uint8_t length, uint8_t size);
     void drawPixel(int16_t x, int16_t y, uint8_t color);
+    void drawIcon(int16_t x, int16_t y, uint8_t icon, uint8_t size);
     void drawChar(int16_t x, int16_t y, unsigned char c, uint8_t size);
     void drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
     void sendCommand(uint8_t byte);
