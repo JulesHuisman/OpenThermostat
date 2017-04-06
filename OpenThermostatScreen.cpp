@@ -38,7 +38,7 @@ void OpenThermostatScreen::begin()
 //Clear the whole screen
 void OpenThermostatScreen::clearAll()
 {
-  clear(0,0,127,63);
+  clear(0,0,128,64);
 }
 
 void OpenThermostatScreen::clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
@@ -57,7 +57,7 @@ void OpenThermostatScreen::loadScreen(char text[])
 
   //If load screen is already active only redraw the text
   if (activeScreen == LOAD_SCREEN) {
-    clear(0,13,127,20);
+    clear(0,13,128,20);
   } else {
     activeScreen = LOAD_SCREEN;
     loadBarWidth = 0;
@@ -133,7 +133,7 @@ void OpenThermostatScreen::drawSidebar()
   if (activeScreen != HOME_SCREEN) return;
 
   //Clear the sidebar
-  clear(113,0,127,63);
+  clear(113,0,128,64);
 
   for (uint8_t i = 0; i < 3; i++)
   {
@@ -142,6 +142,44 @@ void OpenThermostatScreen::drawSidebar()
       drawIcon(113,(i*22),sidebarIcons[i],2);
     }
   }
+}
+
+//Draw a menu
+void OpenThermostatScreen::menuScreen(uint8_t active)
+{
+  //If the menu screen is initialized set the top to zero
+  if (activeScreen != MENU_SCREEN) {
+    menuTop = 0;
+  }
+
+  activeScreen = MENU_SCREEN;
+
+  clearAll();
+
+  if (active > menuTop + 2) {
+    menuTop = active - 2;
+  }
+  else if (active < menuTop) {
+    menuTop = active;
+  }
+
+  for (uint8_t i = menuTop; i < (menuTop+3); i++)
+  {
+    cursorX = 10;
+    cursorY = 4+((i-menuTop)*23);
+
+    if (i == active)
+    {
+      fillRect(0,cursorY-2,4,16);
+      cursorX = 15;
+    }
+
+    write(menuItems[i],strlen(menuItems[i]),2);
+  }
+
+  activeMenu = active;
+
+  display();
 }
 
 //Draw a pixel at a x,y position

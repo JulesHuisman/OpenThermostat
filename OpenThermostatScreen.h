@@ -24,10 +24,13 @@ class OpenThermostatScreen
     void loadScreenRefresh();
     void homeScreen(float value);
     void drawSidebar();
+    void menuScreen(uint8_t active);
     void clearAll();
     void clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
     uint8_t activeScreen;
+    uint8_t activeMenu;
     uint8_t sidebarIcons[3];
+    char *menuItems[5] = {"Return", "Update","Code","Timezone","Info"};
   private:
     void write(char text[], uint8_t length, uint8_t size);
     void drawPixel(int16_t x, int16_t y, uint8_t color);
@@ -39,6 +42,7 @@ class OpenThermostatScreen
     uint8_t screenBuffer[1024];
     uint8_t cursorX, cursorY;
     uint8_t loadBarWidth;
+    uint8_t menuTop;
 };
 
 #endif

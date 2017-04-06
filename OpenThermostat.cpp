@@ -29,21 +29,38 @@ void OpenThermostat::begin()
   Screen.loadScreen("Connected!");
   delay(1600);
 
+  getWifiStrength();
   readTemperature();
+  // delay(2000);
+
+  Screen.menuScreen(0);
+  delay(1000);
+  Screen.menuScreen(1);
+  delay(1000);
+  Screen.menuScreen(2);
+  delay(1000);
+  Screen.menuScreen(3);
+  delay(1000);
+  Screen.menuScreen(4);
+  delay(1000);
+  Screen.menuScreen(3);
+  delay(1000);
+  getWifiStrength();
+  readTemperature();
+  delay(2000);
+  Screen.menuScreen(1);
+  delay(1000);
 }
 
 //The loop function of the library
 void OpenThermostat::run()
 {
-  if (Screen.activeScreen == HOME_SCREEN)
-  {
-    getWifiStrength();
-    readTemperature();
-  }
+  getWifiStrength();
+  readTemperature();
   delay(5000);
 }
 
-//Returns the wifi strength on a scale from 1 to 3
+//Get the wifi strength and draw it as an icon when on the home screen
 void OpenThermostat::getWifiStrength()
 {
   uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
@@ -53,11 +70,11 @@ void OpenThermostat::getWifiStrength()
   Screen.drawSidebar();
 }
 
-//Reads the current temperature and prints it to the screen
+//Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-    float t = dht.readTemperature(tempMode);
-    t += tempCorrection;
+  float t = dht.readTemperature(tempMode);
+  t += tempCorrection;
 
-    Screen.homeScreen(t);
+  Screen.homeScreen(t);
 }
