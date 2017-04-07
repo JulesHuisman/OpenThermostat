@@ -31,25 +31,6 @@ void OpenThermostat::begin()
 
   getWifiStrength();
   readTemperature();
-  // delay(2000);
-
-  Screen.menuScreen(0);
-  delay(1000);
-  Screen.menuScreen(1);
-  delay(1000);
-  Screen.menuScreen(2);
-  delay(1000);
-  Screen.menuScreen(3);
-  delay(1000);
-  Screen.menuScreen(4);
-  delay(1000);
-  Screen.menuScreen(3);
-  delay(1000);
-  getWifiStrength();
-  readTemperature();
-  delay(2000);
-  Screen.menuScreen(1);
-  delay(1000);
 }
 
 //The loop function of the library
