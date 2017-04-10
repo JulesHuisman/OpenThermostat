@@ -7,12 +7,13 @@
   https://github.com/adafruit/Adafruit_SSD1306
 */
 
-#ifndef OpenThermostatScreen_h
-#define OpenThermostatScreen_h
+#ifndef Screen_h
+#define Screen_h
 
 #include <SPI.h>;
 #include "Arduino.h";
-#include "include/defines.h";
+#include "include/defines.h"
+#include "include/graphics.h"
 
 class OpenThermostatScreen
 {

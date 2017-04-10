@@ -8,9 +8,9 @@
 #define OpenThermostat_h
 
 #include <ESP8266WiFi.h>;
-#include <DHT.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
+#include "OpenThermostatDht.h";
 #include "include/defines.h";
 
 class OpenThermostat
@@ -23,9 +23,10 @@ class OpenThermostat
     void getWifiStrength();
     void readTemperature();
     OpenThermostatScreen Screen;
-    DHT dht;
+    OpenThermostatDht Dht;
     float tempCorrection;
     uint8_t tempMode;
+    float temperature;
 };
 
 #endif

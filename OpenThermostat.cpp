@@ -9,9 +9,10 @@ OpenThermostat::OpenThermostat()
 void OpenThermostat::begin()
 {
   Screen.begin();
-  dht.begin();
+  Dht.begin();
+  WiFi.begin("Thorin Wireless 2.4", "Hilm@n173012");
 
-  //Get the active SSID name and convert it to a char[]
+  //Get the active SSID name and convert it to a character array
   char ssidChar[32];
   String ssid = WiFi.SSID();
   strcpy(ssidChar, ssid.c_str());
@@ -29,33 +30,42 @@ void OpenThermostat::begin()
   Screen.loadScreen("Connected!");
   delay(1600);
 
-  getWifiStrength();
-  readTemperature();
+  Screen.homeScreen(0);
 }
 
 //The loop function of the library
 void OpenThermostat::run()
 {
-  getWifiStrength();
-  readTemperature();
-  delay(5000);
+   getWifiStrength();
+   readTemperature();
+   delay(5000);
 }
 
 //Get the wifi strength and draw it as an icon when on the home screen
 void OpenThermostat::getWifiStrength()
 {
-  uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
-  strength = constrain(strength,1,3);
+  if (Screen.activeScreen == HOME_SCREEN) {
+    uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
+    strength = constrain(strength,1,3);
 
-  Screen.sidebarIcons[0] = strength;
-  Screen.drawSidebar();
+    Screen.sidebarIcons[0] = strength; //Set the corresponding wifi icon
+    Screen.drawSidebar();
+  }
 }
 
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  float t = dht.readTemperature(tempMode);
-  t += tempCorrection;
+  float _temperature = Dht.readTemperature(tempMode);
 
-  Screen.homeScreen(t);
+  //Only save the temperature if it read correctly
+  if (_temperature != NAN) {
+    temperature = _temperature;
+    temperature += tempCorrection;
+  }
+
+  //Only draw the temperature if the home screen is active
+  if (Screen.activeScreen == HOME_SCREEN) {
+    Screen.homeScreen(temperature);
+  }
 }

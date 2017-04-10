@@ -19,3 +19,6 @@
 //Define the different temperature modes
 #define CELCIUS 0
 #define FAHRENHEIT 1
+
+//DHT pin
+#define DHT_PIN 3

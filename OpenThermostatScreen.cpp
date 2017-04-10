@@ -1,8 +1,5 @@
 #include "OpenThermostatScreen.h";
 
-//Include font and graphics
-#include "include/graphics.h";
-
 #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 
 //Switch two values around
