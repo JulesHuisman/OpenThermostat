@@ -5,9 +5,10 @@
 #define RST_PIN 0
 
 //Define the different screens that exist
-#define LOAD_SCREEN 1
-#define HOME_SCREEN 2
-#define MENU_SCREEN 3
+#define LOAD_SCREEN  1
+#define HOME_SCREEN  2
+#define MENU_SCREEN  3
+#define VALUE_SCREEN 4
 
 //Define the different custom icons
 #define WIFI_ICON_3 1

@@ -14,6 +14,9 @@
 #include "Arduino.h";
 #include "include/defines.h"
 #include "include/graphics.h"
+extern "C" {
+  #include<user_interface.h>
+}
 
 class OpenThermostatScreen
 {
@@ -23,6 +26,7 @@ class OpenThermostatScreen
     void display();
     void loadScreen(char text[]);
     void loadScreenRefresh();
+    void valueScreen(char title[], char value[]);
     void homeScreen(float value);
     void drawSidebar();
     void menuScreen(uint8_t active);

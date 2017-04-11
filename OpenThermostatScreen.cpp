@@ -92,6 +92,31 @@ void OpenThermostatScreen::loadScreenRefresh()
   display();
 }
 
+//Draw a screen with a title and a value
+void OpenThermostatScreen::valueScreen(char title[], char value[])
+{
+  activeScreen = VALUE_SCREEN;
+
+  clearAll();
+  size_t titleLen = strlen(title);
+  size_t valueLen = strlen(value);
+
+  cursorX = (128-(6*titleLen))/2; //Center the text
+  cursorY = 8;
+
+  write(title, titleLen, 1);
+
+  uint8_t size;
+  if (valueLen > 11) size = 1;
+  else size = 2;
+
+  cursorX = (128-((6*size)*valueLen))/2; //Center the text
+  cursorY = 30;
+
+  write(value, valueLen, size);
+  display();
+}
+
 //Draw the home screen
 void OpenThermostatScreen::homeScreen(float value)
 {
@@ -144,7 +169,7 @@ void OpenThermostatScreen::drawSidebar()
 //Draw a menu
 void OpenThermostatScreen::menuScreen(uint8_t active)
 {
-  //If the menu screen is initialized set the top to zero
+  //If the menu screen is initialized set the top item to zero
   if (activeScreen != MENU_SCREEN) {
     menuTop = 0;
   }

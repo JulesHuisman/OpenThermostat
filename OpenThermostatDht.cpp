@@ -85,7 +85,7 @@ boolean OpenThermostatDht::read(bool force) {
     digitalWrite(DHT_PIN, HIGH);
     delayMicroseconds(40);
 
-    // Now start reading the data line to get the value from the OpenThermostatDht sensor.
+    // Now start reading the data line to get the value from the DHT sensor.
     pinMode(DHT_PIN, INPUT_PULLUP);
     delayMicroseconds(10);  // Delay a bit to let sensor pull data line low.
 

@@ -1,4 +1,4 @@
-/* OpenThermostatDht library
+/* DHT library
 
   MIT license
   written by Adafruit Industries
@@ -11,13 +11,6 @@
 
 #include "Arduino.h"
 #include "include/defines.h"
-
-// Define types of sensors.
-#define DHT11 11
-#define DHT22 22
-#define DHT21 21
-#define AM2301 21
-
 
 class OpenThermostatDht {
   public:
@@ -47,7 +40,6 @@ class InterruptLock {
    ~InterruptLock() {
     interrupts();
    }
-
 };
 
 #endif
