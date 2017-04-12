@@ -22,7 +22,18 @@ void OpenThermostat::run()
 {
    getWifiStrength();
    readTemperature();
-   delay(5000);
+   delay(2000);
+   Screen.addSidebarIcon(HEATING_ICON);
+   delay(2000);
+   Screen.addSidebarIcon(HEATING_ICON);
+   delay(2000);
+   Screen.addSidebarIcon(UPDATE_ICON);
+   delay(2000);
+   Screen.removeSidebarIcon(HEATING_ICON);
+   delay(2000);
+   Screen.removeSidebarIcon(UPDATE_ICON);
+   delay(2000);
+   Screen.addSidebarIcon(UPDATE_ICON);
 }
 
 void OpenThermostat::connectWIFI()

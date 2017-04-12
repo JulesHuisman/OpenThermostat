@@ -135,7 +135,6 @@ void OpenThermostatScreen::homeScreen(float value)
     clear(0,18,113,64);
   } else {
     activeScreen = HOME_SCREEN;
-    sidebarIcons[1] = UPDATE_ICON;
 
     clearAll();
     drawSidebar();
@@ -146,6 +145,51 @@ void OpenThermostatScreen::homeScreen(float value)
 
   write(valueChar, len, 4);
 
+  display();
+}
+
+//Add a icon at the bottom of the sidebar
+void OpenThermostatScreen::addSidebarIcon(uint8_t icon)
+{
+  for (uint8_t i = 0; i < sizeof(sidebarIcons); i++)
+  {
+    //If the icon is already drawn
+    if (sidebarIcons[i] == icon)
+    {
+      break;
+    }
+    //If an empty spot is found, draw the icon
+    else if (sidebarIcons[i] == 0)
+    {
+      sidebarIcons[i] = icon;
+      drawSidebar();
+      display();
+      break;
+    }
+  }
+}
+
+//Remove a icon from the sidebar
+void OpenThermostatScreen::removeSidebarIcon(uint8_t icon)
+{
+  bool removed = false;
+  for (uint8_t i = 0; i < sizeof(sidebarIcons); i++)
+  {
+    //If the icon is found, remove the icon
+    if (sidebarIcons[i] == icon)
+    {
+      sidebarIcons[i] = 0;
+      clear(113,(i*22),128,((i*22)+22));
+
+      removed = true;
+    }
+    //Shift all the icons one place up to fill the gap
+    if (removed == true && i < 3)
+    {
+      sidebarIcons[i] = sidebarIcons[i+1];
+    }
+  }
+  drawSidebar();
   display();
 }
 

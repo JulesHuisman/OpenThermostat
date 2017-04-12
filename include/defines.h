@@ -11,11 +11,12 @@
 #define VALUE_SCREEN 4
 
 //Define the different custom icons
-#define WIFI_ICON_3 1
-#define WIFI_ICON_2 2
-#define WIFI_ICON_1 3
-#define UPDATE_ICON 4
-#define DEGREE_ICON 5
+#define WIFI_ICON_3  1
+#define WIFI_ICON_2  2
+#define WIFI_ICON_1  3
+#define UPDATE_ICON  4
+#define DEGREE_ICON  5
+#define HEATING_ICON 6
 
 //Define the different temperature modes
 #define CELCIUS 0
