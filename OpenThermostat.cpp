@@ -5,12 +5,23 @@ OpenThermostat::OpenThermostat()
   tempCorrection = -3;
   tempMode = CELCIUS;
   targetTemp = 0;
+  aFlag = 0;
+  bFlag = 0;
+  encoderPos = 0;
+  oldEncPos = 0;
+  buttonPressed = false;
 }
 
 void OpenThermostat::begin()
 {
   Screen.begin();
   Dht.begin();
+
+  //PinModes and intterupts for the rotary encoder
+  pinMode(ROTA_PIN, INPUT_PULLUP);
+  pinMode(ROTB_PIN, INPUT_PULLUP);
+  attachInterrupt(ROTA_PIN, PinA, RISING);
+  attachInterrupt(ROTB_PIN, PinB, RISING);
 
   connectWIFI();
 
@@ -188,5 +199,42 @@ void OpenThermostat::readTemperature()
   //Only draw the temperature if the home screen is active
   if (Screen.activeScreen == HOME_SCREEN) {
     Screen.homeScreen(temperature);
+  }
+}
+
+void OpenThermostat::PinA()
+{
+  detachInterrupt(ROTA_PIN);
+  readingA = digitalRead(ROTA_PIN);
+  readingB = digitalRead(ROTB_PIN);
+  if (readingA == HIGH && readingB == HIGH && aFlag) {
+    targetTemp+=0.1;
+    //do something here
+    bFlag = 0;
+    aFlag = 0;
+  }
+  else if (readingA == HIGH && readingB == LOW) bFlag = 1;
+  attachInterrupt(ROTA_PIN, PinA, RISING);
+}
+
+void OpenThermostat::PinB()
+{
+  detachInterrupt(ROTB_PIN);
+  readingA = digitalRead(ROTA_PIN);
+  readingB = digitalRead(ROTB_PIN);
+  if (readingA == HIGH && readingB == HIGH && bFlag) {
+    ra==targetTemp-=0.1;
+    //do something here
+    bFlag = 0;
+    aFlag = 0;
+  }
+  else if (readingB == HIGH && readingA == LOW) aFlag = 1;
+  attachInterrupt(ROTB_PIN, PinB, RISING);
+}
+
+void OpenThermostat::readButton()
+{
+  if(analogRead(BUT_PIN) > 20) {
+    buttonPressed = true;
   }
 }

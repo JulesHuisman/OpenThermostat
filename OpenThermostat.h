@@ -38,6 +38,13 @@ class OpenThermostat
     float temperature;
     char SSID[32];
     bool accesPointActive;
+    volatile byte aFlag;
+    volatile byte bFlag;
+    volatile byte encoderPos;
+    volatile byte oldEncPos;
+    volatile byte readingA;
+    volatile byte readingB;
+    bool buttonPressed;
 };
 
 #endif
