@@ -10,7 +10,6 @@
 #include <ESP8266WiFi.h>;
 #include <DNSServer.h>;
 #include <ESP8266WebServer.h>;
-#include <DNSServer.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
 #include "OpenThermostatDht.h";
