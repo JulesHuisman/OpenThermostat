@@ -1,14 +1,17 @@
 #include "OpenThermostat.h";
 
+float OpenThermostat::targetTemp = 0;
+volatile uint8_t OpenThermostat::aFlag = 0;
+volatile uint8_t OpenThermostat::bFlag = 0;
+volatile uint8_t OpenThermostat::encoderPos = 0;
+volatile uint8_t OpenThermostat::oldEncPos = 0;
+volatile uint8_t OpenThermostat::readingA;
+volatile uint8_t OpenThermostat::readingB;
+
 OpenThermostat::OpenThermostat()
 {
   tempCorrection = -3;
   tempMode = CELCIUS;
-  targetTemp = 0;
-  aFlag = 0;
-  bFlag = 0;
-  encoderPos = 0;
-  oldEncPos = 0;
   buttonPressed = false;
 }
 
@@ -32,19 +35,20 @@ void OpenThermostat::begin()
 void OpenThermostat::run()
 {
    getWifiStrength();
-   readTemperature();
-   delay(2000);
-   Screen.addSidebarIcon(HEATING_ICON);
-   delay(2000);
-   Screen.addSidebarIcon(HEATING_ICON);
-   delay(2000);
-   Screen.addSidebarIcon(UPDATE_ICON);
-   delay(2000);
-   Screen.removeSidebarIcon(HEATING_ICON);
-   delay(2000);
-   Screen.removeSidebarIcon(UPDATE_ICON);
-   delay(2000);
-   Screen.addSidebarIcon(UPDATE_ICON);
+  //  readTemperature();
+  //  delay(2000);
+  //  Screen.addSidebarIcon(HEATING_ICON);
+  //  delay(2000);
+  //  Screen.addSidebarIcon(HEATING_ICON);
+  //  delay(2000);
+  //  Screen.addSidebarIcon(UPDATE_ICON);
+  //  delay(2000);
+  //  Screen.removeSidebarIcon(HEATING_ICON);
+  //  delay(2000);
+  //  Screen.removeSidebarIcon(UPDATE_ICON);
+  //  delay(2000);
+  //  Screen.addSidebarIcon(UPDATE_ICON);
+   Screen.homeScreen(targetTemp);
 }
 
 void OpenThermostat::connectWIFI()
