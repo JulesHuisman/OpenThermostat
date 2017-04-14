@@ -36,7 +36,7 @@ void OpenThermostat::begin()
 
   connectWIFI();
 
-  Screen.homeScreen(0);
+  Screen.menuScreen(0);
 }
 
 //The loop function of the library
