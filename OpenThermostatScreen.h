@@ -37,6 +37,7 @@ class OpenThermostatScreen
     uint8_t activeScreen;
     uint8_t activeMenu;
     uint8_t sidebarIcons[3];
+    const uint8_t menuLength = 6;
     char *menuItems[6] = {"Return", "Update","Code","Unit","Timezone","Info"};
   private:
     void write(char text[], uint8_t length, uint8_t size);

@@ -47,6 +47,7 @@ class OpenThermostat
     uint8_t tempMode;
     float temperature;
     char SSID[32];
+    int8_t activeMenu;
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
     static volatile uint8_t encoderPos;

@@ -213,15 +213,11 @@ void OpenThermostatScreen::drawSidebar()
 //Draw a menu
 void OpenThermostatScreen::menuScreen(uint8_t active)
 {
-  //If the menu screen is initialized set the top item to zero
-  if (activeScreen != MENU_SCREEN) {
-    menuTop = 0;
-  }
-
   activeScreen = MENU_SCREEN;
 
   clearAll();
 
+  //Animation for scrolling below the bottom of the screen
   if (active > menuTop + 2) {
     menuTop = active - 2;
   }

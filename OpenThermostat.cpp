@@ -243,11 +243,15 @@ void OpenThermostat::readRotary()
     if (rotaryValue == rotaryValueOld) {
       return;
     } else if (rotaryValue > rotaryValueOld) {
-      Screen.activeMenu+=1;
+      activeMenu+=1;
     } else if (rotaryValue < rotaryValueOld) {
-      Screen.activeMenu-=1;
+      activeMenu-=1;
     }
-    Screen.menuScreen(Screen.activeMenu);
+
+    if (activeMenu >= Screen.menuLength) activeMenu = 0;
+    else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
+
+    Screen.menuScreen(activeMenu);
   }
   rotaryValueOld = rotaryValue;
 }
