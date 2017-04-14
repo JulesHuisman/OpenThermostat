@@ -45,6 +45,7 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    readRotary();
+   Screen.menuScreen(1);
    //Screen.homeScreen(setTemp);
 }
 
@@ -227,6 +228,16 @@ void OpenThermostat::readRotary()
     lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
     lastSetTemperatureRead = millis();
     Screen.homeScreen(setTemp);
+  } else if (Screen.activeScreen == MENU_SCREEN)
+  {
+    if (rotaryValue == rotaryValueOld) {
+      return;
+    } else if (rotaryValue > rotaryValueOld) {
+      Screen.activeMenu+=1;
+    } else if (rotaryValue < rotaryValueOld) {
+      Screen.activeMenu-=1;
+    }
+    Screen.menuScreen(Screen.activeMenu);
   }
   rotaryValueOld = rotaryValue;
 }
