@@ -12,8 +12,13 @@ OpenThermostat::OpenThermostat()
 {
   tempCorrection = -3;
   tempMode = CELCIUS;
-  lastWifiStrengthRead = wifiStrengthRefresh = 60000; //How often to read wifi strength
-  lastTemperatureRead = temperatureRefresh = 10000; //How often to get the indoor temperature
+
+  wifiStrengthRefresh = 60000; //How often to read wifi strength
+  temperatureRefresh = 10000; //How often to get the indoor temperature
+
+  lastWifiStrengthRead = -wifiStrengthRefresh;
+  lastTemperatureRead  = -temperatureRefresh;
+
   buttonPressed = false;
 }
 
@@ -174,7 +179,7 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if (millis() - lastWifiStrengthRead > wifiStrengthRefresh && Screen.activeScreen == HOME_SCREEN) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthRefresh && Screen.activeScreen == HOME_SCREEN) {
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
@@ -182,6 +187,7 @@ void OpenThermostat::getWifiStrength()
     Screen.drawSidebar();
 
     lastWifiStrengthRead = millis();
+    Serial.println("Get wifi");
   }
 }
 
@@ -189,7 +195,7 @@ void OpenThermostat::getWifiStrength()
 void OpenThermostat::readTemperature()
 {
   //Only read the temperature every so often, and rotary is not turning
-  if (millis() - lastTemperatureRead > temperatureRefresh)
+  if ((millis() - lastTemperatureRead) > temperatureRefresh)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -203,7 +209,9 @@ void OpenThermostat::readTemperature()
     if (Screen.activeScreen == HOME_SCREEN) {
       Screen.homeScreen(temperature);
     }
+    Serial.println("Get TEmp");
   }
+  lastTemperatureRead = millis();
 }
 
 void OpenThermostat::readRotary()
@@ -213,10 +221,11 @@ void OpenThermostat::readRotary()
     if (rotaryValue == rotaryValueOld) {
       return;
     } else if (rotaryValue > rotaryValueOld) {
-      Serial.println("Right");
+      targetTemp++;
     } else if (rotaryValue < rotaryValueOld) {
-      Serial.println("Left");
+      targetTemp--;
     }
+    Screen.homeScreen(targetTemp);
   }
   rotaryValueOld = rotaryValue;
 }
