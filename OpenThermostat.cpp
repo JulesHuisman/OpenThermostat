@@ -13,11 +13,12 @@ OpenThermostat::OpenThermostat()
   tempCorrection = -3;
   tempMode = CELCIUS;
 
-  wifiStrengthRefresh = 60000; //How often to read wifi strength
-  temperatureRefresh = 10000; //How often to get the indoor temperature
+  wifiStrengthReadInterval = 60000; //How often to read wifi strength
+  temperatureReadInterval = 10000; //How often to get the indoor temperature
+  setTemperatureInterval = 2500; //How long to display the set temperature
 
-  lastWifiStrengthRead = -wifiStrengthRefresh;
-  lastTemperatureRead  = -temperatureRefresh;
+  lastWifiStrengthRead = -wifiStrengthReadInterval;
+  lastTemperatureRead  = -temperatureReadInterval;
 
   buttonPressed = false;
 }
@@ -44,7 +45,7 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    readRotary();
-   //Screen.homeScreen(targetTemp);
+   //Screen.homeScreen(setTemp);
 }
 
 void OpenThermostat::connectWIFI()
@@ -179,7 +180,7 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if ((millis() - lastWifiStrengthRead) > wifiStrengthRefresh && Screen.activeScreen == HOME_SCREEN) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN) {
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
@@ -187,15 +188,14 @@ void OpenThermostat::getWifiStrength()
     Screen.drawSidebar();
 
     lastWifiStrengthRead = millis();
-    Serial.println("Get wifi");
   }
 }
 
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  //Only read the temperature every so often, and rotary is not turning
-  if ((millis() - lastTemperatureRead) > temperatureRefresh)
+  //Only read the temperature every so often
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lastSetTemperatureRead) > setTemperatureInterval)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -209,9 +209,8 @@ void OpenThermostat::readTemperature()
     if (Screen.activeScreen == HOME_SCREEN) {
       Screen.homeScreen(temperature);
     }
-    Serial.println("Get TEmp");
+    lastTemperatureRead = millis();
   }
-  lastTemperatureRead = millis();
 }
 
 void OpenThermostat::readRotary()
@@ -221,11 +220,13 @@ void OpenThermostat::readRotary()
     if (rotaryValue == rotaryValueOld) {
       return;
     } else if (rotaryValue > rotaryValueOld) {
-      targetTemp++;
+      setTemp += 0.1;
     } else if (rotaryValue < rotaryValueOld) {
-      targetTemp--;
+      setTemp -= 0.1;
     }
-    Screen.homeScreen(targetTemp);
+    lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
+    lastSetTemperatureRead = millis();
+    Screen.homeScreen(setTemp);
   }
   rotaryValueOld = rotaryValue;
 }

@@ -37,10 +37,12 @@ class OpenThermostat
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
     unsigned long lastWifiStrengthRead;
-    unsigned long wifiStrengthRefresh;
+    unsigned long wifiStrengthReadInterval;
     unsigned long lastTemperatureRead;
-    unsigned long temperatureRefresh;
-    float targetTemp;
+    unsigned long temperatureReadInterval;
+    unsigned long lastSetTemperatureRead;
+    unsigned long setTemperatureInterval;
+    float setTemp;
     float tempCorrection;
     uint8_t tempMode;
     float temperature;
