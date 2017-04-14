@@ -37,7 +37,7 @@ class OpenThermostatScreen
     uint8_t activeScreen;
     uint8_t activeMenu;
     uint8_t sidebarIcons[3];
-    char *menuItems[5] = {"Return", "Update","Code","Timezone","Info"};
+    char *menuItems[6] = {"Return", "Update","Code","Unit","Timezone","Info"};
   private:
     void write(char text[], uint8_t length, uint8_t size);
     void drawPixel(int16_t x, int16_t y, uint8_t color);

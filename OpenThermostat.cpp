@@ -1,6 +1,6 @@
 #include "OpenThermostat.h";
 
-float OpenThermostat::targetTemp = 0;
+long OpenThermostat::rotaryValue = 0;
 volatile uint8_t OpenThermostat::aFlag = 0;
 volatile uint8_t OpenThermostat::bFlag = 0;
 volatile uint8_t OpenThermostat::encoderPos = 0;
@@ -12,6 +12,8 @@ OpenThermostat::OpenThermostat()
 {
   tempCorrection = -3;
   tempMode = CELCIUS;
+  lastWifiStrengthRead = wifiStrengthRefresh = 60000; //How often to read wifi strength
+  lastTemperatureRead = temperatureRefresh = 10000; //How often to get the indoor temperature
   buttonPressed = false;
 }
 
@@ -35,20 +37,9 @@ void OpenThermostat::begin()
 void OpenThermostat::run()
 {
    getWifiStrength();
-  //  readTemperature();
-  //  delay(2000);
-  //  Screen.addSidebarIcon(HEATING_ICON);
-  //  delay(2000);
-  //  Screen.addSidebarIcon(HEATING_ICON);
-  //  delay(2000);
-  //  Screen.addSidebarIcon(UPDATE_ICON);
-  //  delay(2000);
-  //  Screen.removeSidebarIcon(HEATING_ICON);
-  //  delay(2000);
-  //  Screen.removeSidebarIcon(UPDATE_ICON);
-  //  delay(2000);
-  //  Screen.addSidebarIcon(UPDATE_ICON);
-   Screen.homeScreen(targetTemp);
+   readTemperature();
+   readRotary();
+   //Screen.homeScreen(targetTemp);
 }
 
 void OpenThermostat::connectWIFI()
@@ -183,30 +174,51 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if (Screen.activeScreen == HOME_SCREEN) {
+  if (millis() - lastWifiStrengthRead > wifiStrengthRefresh && Screen.activeScreen == HOME_SCREEN) {
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
     Screen.sidebarIcons[0] = strength; //Set the corresponding wifi icon
     Screen.drawSidebar();
+
+    lastWifiStrengthRead = millis();
   }
 }
 
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  float _temperature = Dht.readTemperature(tempMode);
+  //Only read the temperature every so often, and rotary is not turning
+  if (millis() - lastTemperatureRead > temperatureRefresh)
+  {
+    float _temperature = Dht.readTemperature(tempMode);
 
-  //Only save the temperature if it read correctly
-  if (!isnan(_temperature)) {
-    temperature = _temperature;
-    temperature += tempCorrection;
-  }
+    //Only save the temperature if it read correctly
+    if (!isnan(_temperature)) {
+      temperature = _temperature;
+      temperature += tempCorrection;
+    }
 
-  //Only draw the temperature if the home screen is active
-  if (Screen.activeScreen == HOME_SCREEN) {
-    Screen.homeScreen(temperature);
+    //Only draw the temperature if the home screen is active
+    if (Screen.activeScreen == HOME_SCREEN) {
+      Screen.homeScreen(temperature);
+    }
   }
+}
+
+void OpenThermostat::readRotary()
+{
+  if (Screen.activeScreen == HOME_SCREEN)
+  {
+    if (rotaryValue == rotaryValueOld) {
+      return;
+    } else if (rotaryValue > rotaryValueOld) {
+      Serial.println("Right");
+    } else if (rotaryValue < rotaryValueOld) {
+      Serial.println("Left");
+    }
+  }
+  rotaryValueOld = rotaryValue;
 }
 
 void OpenThermostat::PinA()
@@ -215,14 +227,13 @@ void OpenThermostat::PinA()
   readingA = digitalRead(ROTA_PIN);
   readingB = digitalRead(ROTB_PIN);
   if (readingA == HIGH && readingB == HIGH && aFlag) {
-    targetTemp+=0.1;
-    //do something here
+    rotaryValue++;
+
     bFlag = 0;
     aFlag = 0;
   }
   else if (readingA == HIGH && readingB == LOW) bFlag = 1;
   attachInterrupt(ROTA_PIN, PinA, RISING);
-  Serial.println("");
 }
 
 void OpenThermostat::PinB()
@@ -231,8 +242,8 @@ void OpenThermostat::PinB()
   readingA = digitalRead(ROTA_PIN);
   readingB = digitalRead(ROTB_PIN);
   if (readingA == HIGH && readingB == HIGH && bFlag) {
-    targetTemp-=0.1;
-    //do something here
+    rotaryValue--;
+
     bFlag = 0;
     aFlag = 0;
   }
