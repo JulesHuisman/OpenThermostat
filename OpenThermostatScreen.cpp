@@ -184,7 +184,7 @@ void OpenThermostatScreen::removeSidebarIcon(uint8_t icon)
       removed = true;
     }
     //Shift all the icons one place up to fill the gap
-    if (removed == true && i < 3)
+    if (removed == true && i <= 2)
     {
       sidebarIcons[i] = sidebarIcons[i+1];
     }

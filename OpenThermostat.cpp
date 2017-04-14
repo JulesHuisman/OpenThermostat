@@ -139,10 +139,13 @@ void OpenThermostat::setupAP()
 
   Screen.valueScreen("Connect to","OpenThermostat");
 
+  //Draw the login page
   webServer.on("/", [=](){
     webServer.send(200, "text/html", HTML);
     Screen.loadScreen("Device connected");
   });
+
+  //When wifi credentials are submitted
   webServer.begin();
   webServer.on("/submit", [=](){
     submitForm();
@@ -215,6 +218,7 @@ void OpenThermostat::PinA()
   }
   else if (readingA == HIGH && readingB == LOW) bFlag = 1;
   attachInterrupt(ROTA_PIN, PinA, RISING);
+  Serial.println("");
 }
 
 void OpenThermostat::PinB()
