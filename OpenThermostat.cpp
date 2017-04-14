@@ -223,7 +223,7 @@ void OpenThermostat::PinB()
   readingA = digitalRead(ROTA_PIN);
   readingB = digitalRead(ROTB_PIN);
   if (readingA == HIGH && readingB == HIGH && bFlag) {
-    ra==targetTemp-=0.1;
+    targetTemp-=0.1;
     //do something here
     bFlag = 0;
     aFlag = 0;

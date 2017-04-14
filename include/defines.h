@@ -26,6 +26,6 @@
 #define DHT_PIN 3
 
 //Rotary encoder pins
-#define ROTB_PIN 4
+#define ROTA_PIN 4
 #define ROTB_PIN 12
-#define BUT_PIN A0;
+#define BUT_PIN A0
