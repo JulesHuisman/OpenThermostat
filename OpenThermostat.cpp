@@ -45,7 +45,6 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    readRotary();
-   Screen.menuScreen(1);
    //Screen.homeScreen(setTemp);
 }
 
