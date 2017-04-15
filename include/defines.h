@@ -11,16 +11,16 @@
 #define VALUE_SCREEN 4
 
 //Define the different custom icons
-#define WIFI_ICON_3 1
-#define WIFI_ICON_2 2
-#define WIFI_ICON_1 3
-#define UPDATE_ICON 4
-#define DEGREE_ICON 5
-#define HEATING_ICON 6
+#define WIFI_ICON_3      1
+#define WIFI_ICON_2      2
+#define WIFI_ICON_1      3
+#define UPDATE_ICON      4
+#define DEGREE_ICON      5
+#define HEATING_ICON     6
 #define THERMOMETER_ICON 7
 
 //Define the different temperature modes
-#define CELCIUS 0
+#define CELCIUS    0
 #define FAHRENHEIT 1
 
 //DHT pin
@@ -29,4 +29,12 @@
 //Rotary encoder pins
 #define ROTA_PIN 4
 #define ROTB_PIN 12
-#define BUT_PIN A0
+#define BUT_PIN  A0
+
+//Define all the main menu items
+#define MAIN_MENU_RETURN   0
+#define MAIN_MENU_UPDATES  1
+#define MAIN_MENU_ID       2
+#define MAIN_MENU_METRICS  3
+#define MAIN_MENU_TIMEZONE 4
+#define MAIN_MENU_INFO     5

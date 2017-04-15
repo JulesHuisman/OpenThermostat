@@ -29,10 +29,10 @@ class OpenThermostat
     void submitForm();
     void getWifiStrength();
     void readTemperature();
+    void readButton();
     void readRotary();
     static void PinA();
     static void PinB();
-    void readButton();
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;

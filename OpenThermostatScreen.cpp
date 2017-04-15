@@ -136,6 +136,7 @@ void OpenThermostatScreen::homeScreen(float value)
   } else {
     activeScreen = HOME_SCREEN;
 
+    removeSidebarIcon(THERMOMETER_ICON); //Remove the thermometer icon when coming from the menu screen
     clearAll();
     drawSidebar();
   }

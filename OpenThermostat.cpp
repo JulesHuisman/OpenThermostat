@@ -16,6 +16,8 @@ OpenThermostat::OpenThermostat()
   minTemp = 0;
   maxTemp = 25;
 
+  activeMenu = 1; //The the menu on the first position below "return"
+
   wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
   temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
   setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
@@ -39,7 +41,6 @@ void OpenThermostat::begin()
 
   connectWIFI();
 
-  //Screen.valueScreen("Unit","F\367 C\367");
   Screen.homeScreen(0);
 }
 
@@ -221,6 +222,7 @@ void OpenThermostat::readTemperature()
 void OpenThermostat::readRotary()
 {
   if (rotaryValue == rotaryValueOld) return;
+
   switch (Screen.activeScreen) {
 
     case HOME_SCREEN:
@@ -238,24 +240,67 @@ void OpenThermostat::readRotary()
       lastSetTemperatureRead = millis();
       Screen.addSidebarIcon(THERMOMETER_ICON);
       Screen.homeScreen(setTemp);
-    break;
+      break;
     }
 
     case MENU_SCREEN:
-      if (rotaryValue == rotaryValueOld) {
-        return;
-      } else if (rotaryValue > rotaryValueOld) {
+    {
+      if (rotaryValue > rotaryValueOld) {
         activeMenu+=1;
       } else if (rotaryValue < rotaryValueOld) {
         activeMenu-=1;
       }
+
       //Wrap the cursor if it goes out of bounds
       if (activeMenu >= Screen.menuLength) activeMenu = 0;
       else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
+
       Screen.menuScreen(activeMenu);
-    break;
+      break;
+    }
   }
   rotaryValueOld = rotaryValue;
+}
+
+void OpenThermostat::readButton()
+{
+  int reading = analogRead(BUT_PIN);
+  if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
+    lastButtonRead = millis();
+
+    //Check the current screen
+    switch (Screen.activeScreen) {
+      case HOME_SCREEN:
+      Screen.menuScreen(1);
+      break;
+
+      case MENU_SCREEN:
+      //Check the current main menu item
+      switch (Screen.activeMenu) {
+        case MAIN_MENU_RETURN:
+          Screen.homeScreen(temperature);
+          break;
+        case MAIN_MENU_UPDATES:
+          break;
+        case MAIN_MENU_ID:
+          Screen.valueScreen("ID Code","8f4cd3sd5");
+          break;
+        case MAIN_MENU_METRICS:
+          break;
+        case MAIN_MENU_TIMEZONE:
+          break;
+        case MAIN_MENU_INFO:
+          Screen.valueScreen("Version","1.0");
+          break;
+      }
+      break;
+
+      case VALUE_SCREEN:
+      Screen.menuScreen(activeMenu);
+      break;
+    }
+  }
+  previous = reading;
 }
 
 void OpenThermostat::PinA()
@@ -286,27 +331,4 @@ void OpenThermostat::PinB()
   }
   else if (readingB == HIGH && readingA == LOW) aFlag = 1;
   attachInterrupt(ROTB_PIN, PinB, RISING);
-}
-
-void OpenThermostat::readButton()
-{
-  int reading = analogRead(BUT_PIN);
-  if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
-   lastButtonRead = millis();
-      switch (Screen.activeScreen) {
-        case HOME_SCREEN:
-        Screen.menuScreen(0);
-        break;
-        case MENU_SCREEN:
-        switch (Screen.activeMenu) {
-          case 0:
-          Screen.homeScreen(temperature);
-          break;
-          case 1:
-          break;
-        }
-        break;
-      }
-    }
-  previous = reading;
 }
