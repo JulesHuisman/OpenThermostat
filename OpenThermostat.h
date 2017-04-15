@@ -44,6 +44,8 @@ class OpenThermostat
     unsigned long setTemperatureInterval;
     float setTemp;
     float tempCorrection;
+    int minTemp;
+    int maxTemp;
     uint8_t tempMode;
     float temperature;
     char SSID[32];
