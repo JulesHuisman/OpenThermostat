@@ -19,11 +19,10 @@ OpenThermostat::OpenThermostat()
   wifiStrengthReadInterval = 60000; //How often to read wifi strength
   temperatureReadInterval = 10000; //How often to get the indoor temperature
   setTemperatureInterval = 2500; //How long to display the set temperature
+  buttonReadInterval = 150; //Debounce delay for readButton()
 
   lastWifiStrengthRead = -wifiStrengthReadInterval;
   lastTemperatureRead  = -temperatureReadInterval;
-
-  buttonPressed = false;
 }
 
 void OpenThermostat::begin()
@@ -48,6 +47,7 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    readRotary();
+   readButton();
 }
 
 void OpenThermostat::connectWIFI()
@@ -247,6 +247,7 @@ void OpenThermostat::readRotary()
       } else if (rotaryValue < rotaryValueOld) {
         activeMenu-=1;
       }
+      //Wrap the cursor if it goes out of bounds
       if (activeMenu >= Screen.menuLength) activeMenu = 0;
       else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
       Screen.menuScreen(activeMenu);
@@ -287,7 +288,23 @@ void OpenThermostat::PinB()
 
 void OpenThermostat::readButton()
 {
-  if(analogRead(BUT_PIN) > 20) {
-    buttonPressed = true;
+  if ((millis() - lastButtonRead) > buttonReadInterval) {
+   lastButtonRead = millis();
+    if(analogRead(BUT_PIN) > 20) {
+      switch (Screen.activeScreen) {
+        case HOME_SCREEN:
+        Screen.menuScreen(0);
+        break;
+        case MENU_SCREEN:
+        switch (Screen.activeMenu) {
+          case 0:
+          Screen.homeScreen(temperature);
+          break;
+          case 1:
+          break;
+        }
+        break;
+      }
+    }
   }
 }

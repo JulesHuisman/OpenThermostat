@@ -42,6 +42,8 @@ class OpenThermostat
     unsigned long temperatureReadInterval;
     unsigned long lastSetTemperatureRead;
     unsigned long setTemperatureInterval;
+    unsigned long lastButtonRead;
+    unsigned long buttonReadInterval;
     float setTemp;
     float tempCorrection;
     int minTemp;
@@ -59,7 +61,6 @@ class OpenThermostat
     static long rotaryValue;
     long rotaryValueOld;
     bool accesPointActive;
-    bool buttonPressed;
 };
 
 #endif
