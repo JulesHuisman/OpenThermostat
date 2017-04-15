@@ -44,6 +44,7 @@ class OpenThermostat
     unsigned long setTemperatureInterval;
     unsigned long lastButtonRead;
     unsigned long buttonReadInterval;
+    int previous;
     float setTemp;
     float tempCorrection;
     int minTemp;

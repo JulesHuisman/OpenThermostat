@@ -20,6 +20,7 @@ OpenThermostat::OpenThermostat()
   temperatureReadInterval = 10000; //How often to get the indoor temperature
   setTemperatureInterval = 2500; //How long to display the set temperature
   buttonReadInterval = 150; //Debounce delay for readButton()
+  previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval;
   lastTemperatureRead  = -temperatureReadInterval;
@@ -288,9 +289,9 @@ void OpenThermostat::PinB()
 
 void OpenThermostat::readButton()
 {
-  if ((millis() - lastButtonRead) > buttonReadInterval) {
+  int reading = analogRead(BUT_PIN);
+  if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
    lastButtonRead = millis();
-    if(analogRead(BUT_PIN) > 20) {
       switch (Screen.activeScreen) {
         case HOME_SCREEN:
         Screen.menuScreen(0);
@@ -306,5 +307,5 @@ void OpenThermostat::readButton()
         break;
       }
     }
-  }
+  previous = reading;
 }
