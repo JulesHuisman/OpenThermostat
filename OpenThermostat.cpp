@@ -218,42 +218,39 @@ void OpenThermostat::readTemperature()
 
 void OpenThermostat::readRotary()
 {
-  if (Screen.activeScreen == HOME_SCREEN)
-  {
-    if (rotaryValue == rotaryValueOld) return;
+  if (rotaryValue == rotaryValueOld) return;
+  switch (Screen.activeScreen) {
 
-    //Change the set temperature faster if the button is turning quicker
-    float change = map((millis()-lastSetTemperatureRead),0,100,5,1);
-    change = constrain(change,1,10);
-    change /= 10;
-
-    if (rotaryValue > rotaryValueOld)
-      setTemp += change;
-    else if (rotaryValue < rotaryValueOld)
-      setTemp -= change;
-
-    setTemp = constrain(setTemp,minTemp,maxTemp);
-
-    Screen.addSidebarIcon(THERMOMETER_ICON);
-    lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
-    lastSetTemperatureRead = millis();
-
-    Screen.homeScreen(setTemp);
-  } else if (Screen.activeScreen == MENU_SCREEN)
-  {
-    if (rotaryValue == rotaryValueOld) {
-      return;
-    } else if (rotaryValue > rotaryValueOld) {
-      activeMenu+=1;
-    } else if (rotaryValue < rotaryValueOld) {
-      activeMenu-=1;
+    case HOME_SCREEN:
+    {
+      float change = map((millis()-lastSetTemperatureRead),0,100,5,1);
+      change = constrain(change,1,10);
+      change /= 10;
+      if (rotaryValue > rotaryValueOld) {
+        setTemp += change;
+      }
+      else if (rotaryValue < rotaryValueOld) {
+        setTemp -= change;
+      }
+      lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
+      lastSetTemperatureRead = millis();
+      Screen.addSidebarIcon(THERMOMETER_ICON);
+      Screen.homeScreen(setTemp);
+    break;
     }
 
-    //Wrap the cursor if it goes out of bounds
-    if (activeMenu >= Screen.menuLength) activeMenu = 0;
-    else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
-
-    Screen.menuScreen(activeMenu);
+    case MENU_SCREEN:
+      if (rotaryValue == rotaryValueOld) {
+        return;
+      } else if (rotaryValue > rotaryValueOld) {
+        activeMenu+=1;
+      } else if (rotaryValue < rotaryValueOld) {
+        activeMenu-=1;
+      }
+      if (activeMenu >= Screen.menuLength) activeMenu = 0;
+      else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
+      Screen.menuScreen(activeMenu);
+    break;
   }
   rotaryValueOld = rotaryValue;
 }
