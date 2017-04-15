@@ -16,14 +16,21 @@ OpenThermostat::OpenThermostat()
   minTemp = 0;
   maxTemp = 25;
 
+<<<<<<< HEAD
   wifiStrengthReadInterval = 60000; //How often to read wifi strength
   temperatureReadInterval = 10000; //How often to get the indoor temperature
   setTemperatureInterval = 2500; //How long to display the set temperature
   buttonReadInterval = 150; //Debounce delay for readButton()
   previous = 0;
+=======
+  wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
+  temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
+  setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
+  buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
+>>>>>>> origin/master
 
-  lastWifiStrengthRead = -wifiStrengthReadInterval;
-  lastTemperatureRead  = -temperatureReadInterval;
+  lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
+  lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
 }
 
 void OpenThermostat::begin()
@@ -39,6 +46,7 @@ void OpenThermostat::begin()
 
   connectWIFI();
 
+  //Screen.valueScreen("Unit","F\367 C\367");
   Screen.homeScreen(0);
 }
 
