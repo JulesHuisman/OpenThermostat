@@ -16,14 +16,13 @@ OpenThermostat::OpenThermostat()
   minTemp = 0;
   maxTemp = 25;
 
-  wifiStrengthReadInterval = 60000; //How often to read wifi strength (60s)
-  temperatureReadInterval = 10000; //How often to get the indoor temperature (10s)
-  setTemperatureInterval = 2500; //How long to display the set temperature (2.5s)
+  wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
+  temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
+  setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
+  buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
-
-  buttonPressed = false;
 }
 
 void OpenThermostat::begin()
@@ -49,6 +48,7 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    readRotary();
+   readButton();
 }
 
 void OpenThermostat::connectWIFI()
@@ -219,42 +219,40 @@ void OpenThermostat::readTemperature()
 
 void OpenThermostat::readRotary()
 {
-  if (Screen.activeScreen == HOME_SCREEN)
-  {
-    if (rotaryValue == rotaryValueOld) return;
+  if (rotaryValue == rotaryValueOld) return;
+  switch (Screen.activeScreen) {
 
-    //Change the set temperature faster if the button is turning quicker
-    float change = map((millis()-lastSetTemperatureRead),0,100,5,1);
-    change = constrain(change,1,10);
-    change /= 10;
-
-    if (rotaryValue > rotaryValueOld)
-      setTemp += change;
-    else if (rotaryValue < rotaryValueOld)
-      setTemp -= change;
-
-    setTemp = constrain(setTemp,minTemp,maxTemp);
-
-    Screen.addSidebarIcon(THERMOMETER_ICON);
-    lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
-    lastSetTemperatureRead = millis();
-
-    Screen.homeScreen(setTemp);
-  } else if (Screen.activeScreen == MENU_SCREEN)
-  {
-    if (rotaryValue == rotaryValueOld) {
-      return;
-    } else if (rotaryValue > rotaryValueOld) {
-      activeMenu+=1;
-    } else if (rotaryValue < rotaryValueOld) {
-      activeMenu-=1;
+    case HOME_SCREEN:
+    {
+      float change = map((millis()-lastSetTemperatureRead),0,100,5,1);
+      change = constrain(change,1,10);
+      change /= 10;
+      if (rotaryValue > rotaryValueOld) {
+        setTemp += change;
+      }
+      else if (rotaryValue < rotaryValueOld) {
+        setTemp -= change;
+      }
+      lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
+      lastSetTemperatureRead = millis();
+      Screen.addSidebarIcon(THERMOMETER_ICON);
+      Screen.homeScreen(setTemp);
+    break;
     }
 
-    //Wrap the cursor if it goes out of bounds
-    if (activeMenu >= Screen.menuLength) activeMenu = 0;
-    else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
-
-    Screen.menuScreen(activeMenu);
+    case MENU_SCREEN:
+      if (rotaryValue == rotaryValueOld) {
+        return;
+      } else if (rotaryValue > rotaryValueOld) {
+        activeMenu+=1;
+      } else if (rotaryValue < rotaryValueOld) {
+        activeMenu-=1;
+      }
+      //Wrap the cursor if it goes out of bounds
+      if (activeMenu >= Screen.menuLength) activeMenu = 0;
+      else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
+      Screen.menuScreen(activeMenu);
+    break;
   }
   rotaryValueOld = rotaryValue;
 }
@@ -291,7 +289,23 @@ void OpenThermostat::PinB()
 
 void OpenThermostat::readButton()
 {
-  if(analogRead(BUT_PIN) > 20) {
-    buttonPressed = true;
+  if ((millis() - lastButtonRead) > buttonReadInterval) {
+   lastButtonRead = millis();
+    if(analogRead(BUT_PIN) > 20) {
+      switch (Screen.activeScreen) {
+        case HOME_SCREEN:
+        Screen.menuScreen(0);
+        break;
+        case MENU_SCREEN:
+        switch (Screen.activeMenu) {
+          case 0:
+          Screen.homeScreen(temperature);
+          break;
+          case 1:
+          break;
+        }
+        break;
+      }
+    }
   }
 }
