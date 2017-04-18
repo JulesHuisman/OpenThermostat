@@ -12,3 +12,4 @@ OpenThermostat	KEYWORD1
 # Methods and Functions (KEYWORD2)
 #######################################
 begin	KEYWORD2
+setID KEYWORD2

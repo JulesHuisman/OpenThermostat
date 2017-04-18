@@ -15,7 +15,6 @@ OpenThermostat::OpenThermostat()
 
   minTemp = 0;
   maxTemp = 25;
-  IDLength = 9;
 
   activeMenu = 1; //The the menu on the first position below "return"
 
@@ -33,7 +32,10 @@ void OpenThermostat::begin()
 {
   Screen.begin();
   Dht.begin();
-  EEPROM.begin(10);
+  EEPROM.begin(9);
+
+  //Get the ID code for this thermostat and save it in a variable
+  EEPROM_readID(0);
 
   //PinModes and intterupts for the rotary encoder
   pinMode(ROTA_PIN, INPUT_PULLUP);
@@ -44,8 +46,6 @@ void OpenThermostat::begin()
   connectWIFI();
 
   Screen.homeScreen(0);
-  EEPROM_writeID(0,id);
-  EEPROM_readID(0);
 }
 
 //The loop function of the library
@@ -55,6 +55,13 @@ void OpenThermostat::run()
    readTemperature();
    readRotary();
    readButton();
+}
+
+void OpenThermostat::setID(char ID[])
+{
+  EEPROM.begin(9);
+  EEPROM_writeID(0,ID);
+  EEPROM_readID(0);
 }
 
 void OpenThermostat::connectWIFI()
@@ -287,7 +294,7 @@ void OpenThermostat::readButton()
         case MAIN_MENU_UPDATES:
           break;
         case MAIN_MENU_ID:
-          Screen.valueScreen("ID Code",id);
+          Screen.valueScreen("ID Code",idCode);
           break;
         case MAIN_MENU_METRICS:
           break;
@@ -337,22 +344,20 @@ void OpenThermostat::PinB()
   attachInterrupt(ROTB_PIN, PinB, RISING);
 }
 
-void OpenThermostat::EEPROM_writeID(int adress, char Str [])
+void OpenThermostat::EEPROM_writeID(int adress, char Str[])
 {
-  Serial.println("WRITING");
-    for (int i = 0; i < IDLength; i++){
-          EEPROM.write(adress, Str [i]);
-          adress++;
-    }
+  for (int i = 0; i < 9; i++){
+    EEPROM.write(adress, Str[i]);
+    adress++;
+  }
 }
 
 void OpenThermostat::EEPROM_readID(int adress)
 {
-  char stringBuffer[IDLength];
-  Serial.println("READING");
-    for (int i = 0; i < IDLength; i++){
-          char Character = EEPROM.read(adress);
-          adress++;
-          Serial.println(Character);
-    }
+  for (int i = 0; i < 9; i++){
+    char Character = EEPROM.read(adress);
+    adress++;
+    idCode[i] = Character;
+  }
+  Serial.println(idCode);
 }
