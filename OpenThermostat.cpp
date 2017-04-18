@@ -15,6 +15,7 @@ OpenThermostat::OpenThermostat()
 
   minTemp = 0;
   maxTemp = 25;
+  IDLength = 9;
 
   activeMenu = 1; //The the menu on the first position below "return"
 
@@ -32,6 +33,7 @@ void OpenThermostat::begin()
 {
   Screen.begin();
   Dht.begin();
+  EEPROM.begin(10);
 
   //PinModes and intterupts for the rotary encoder
   pinMode(ROTA_PIN, INPUT_PULLUP);
@@ -42,6 +44,8 @@ void OpenThermostat::begin()
   connectWIFI();
 
   Screen.homeScreen(0);
+  EEPROM_writeID(0,id);
+  EEPROM_readID(0);
 }
 
 //The loop function of the library
@@ -283,7 +287,7 @@ void OpenThermostat::readButton()
         case MAIN_MENU_UPDATES:
           break;
         case MAIN_MENU_ID:
-          Screen.valueScreen("ID Code","8f4cd3sd5");
+          Screen.valueScreen("ID Code",id);
           break;
         case MAIN_MENU_METRICS:
           break;
@@ -331,4 +335,24 @@ void OpenThermostat::PinB()
   }
   else if (readingB == HIGH && readingA == LOW) aFlag = 1;
   attachInterrupt(ROTB_PIN, PinB, RISING);
+}
+
+void OpenThermostat::EEPROM_writeID(int adress, char Str [])
+{
+  Serial.println("WRITING");
+    for (int i = 0; i < IDLength; i++){
+          EEPROM.write(adress, Str [i]);
+          adress++;
+    }
+}
+
+void OpenThermostat::EEPROM_readID(int adress)
+{
+  char stringBuffer[IDLength];
+  Serial.println("READING");
+    for (int i = 0; i < IDLength; i++){
+          char Character = EEPROM.read(adress);
+          adress++;
+          Serial.println(Character);
+    }
 }

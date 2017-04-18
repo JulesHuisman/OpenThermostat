@@ -10,6 +10,7 @@
 #include <ESP8266WiFi.h>;
 #include <DNSServer.h>;
 #include <ESP8266WebServer.h>;
+#include <EEPROM.h>
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
 #include "OpenThermostatDht.h";
@@ -33,6 +34,8 @@ class OpenThermostat
     void readRotary();
     static void PinA();
     static void PinB();
+    void EEPROM_writeID(int adress, char Str[]);
+    void EEPROM_readID(int adress);
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
@@ -52,6 +55,8 @@ class OpenThermostat
     uint8_t tempMode;
     float temperature;
     char SSID[32];
+    char id[10] = {'8','f','4','c','d','3','s','d','5'};
+    int IDLength;
     int8_t activeMenu;
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
