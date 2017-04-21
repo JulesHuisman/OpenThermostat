@@ -38,3 +38,6 @@
 #define MAIN_MENU_METRICS  3
 #define MAIN_MENU_TIMEZONE 4
 #define MAIN_MENU_INFO     5
+
+//Define the different type of HTTP posts and gets
+#define TEMPERATURE_POST 0

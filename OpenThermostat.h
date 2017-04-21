@@ -10,7 +10,8 @@
 #include <ESP8266WiFi.h>;
 #include <DNSServer.h>;
 #include <ESP8266WebServer.h>;
-#include <EEPROM.h>
+#include <WiFiClientSecure.h>
+#include <EEPROM.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
 #include "OpenThermostatDht.h";
@@ -37,9 +38,12 @@ class OpenThermostat
     static void PinB();
     void EEPROM_writeID(int adress, char Str[]);
     void EEPROM_readID(int adress);
+    void postTemperature();
+    void postData(uint8_t type);
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
+    WiFiClientSecure client;
     unsigned long lastWifiStrengthRead;
     unsigned long wifiStrengthReadInterval;
     unsigned long lastTemperatureRead;
@@ -48,6 +52,8 @@ class OpenThermostat
     unsigned long setTemperatureInterval;
     unsigned long lastButtonRead;
     unsigned long buttonReadInterval;
+    unsigned long lastTemperaturePost;
+    unsigned long temperaturePostInterval;
     int previous;
     float setTemp;
     float tempCorrection;
@@ -67,6 +73,9 @@ class OpenThermostat
     static long rotaryValue;
     long rotaryValueOld;
     bool accesPointActive;
+    const char* host = "dashboard.open-thermostat.com";
+    const int httpsPort = 443;
+    const char* fingerprint = "9a fb 23 8b b7 d0 6b ab 3d 21 d9 6e 5e 3a a1 55 84 1d d4 82";
 };
 
 #endif

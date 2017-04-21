@@ -16,16 +16,16 @@ OpenThermostat::OpenThermostat()
   minTemp = 0;
   maxTemp = 25;
 
-  activeMenu = 1; //The the menu on the first position below "return"
-
   wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
   temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
   setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
+  temperaturePostInterval = 900000; //The time between temperature posts (15 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
   previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
+  lastTemperaturePost  = 15000; //Forces posting the temperature on startup
 }
 
 void OpenThermostat::begin()
@@ -46,6 +46,8 @@ void OpenThermostat::begin()
   connectWIFI();
 
   Screen.homeScreen(0);
+
+  idCode = "8f4cd3sd5";
 }
 
 //The loop function of the library
@@ -53,10 +55,12 @@ void OpenThermostat::run()
 {
    getWifiStrength();
    readTemperature();
+   postTemperature();
    readRotary();
    readButton();
 }
 
+//Writes an ID code in the EEPROM
 void OpenThermostat::setID(char ID[])
 {
   EEPROM.begin(9);
@@ -282,7 +286,7 @@ void OpenThermostat::readButton()
     //Check the current screen
     switch (Screen.activeScreen) {
       case HOME_SCREEN:
-      Screen.menuScreen(1);
+      Screen.menuScreen(0);
       break;
 
       case MENU_SCREEN:
@@ -360,4 +364,52 @@ void OpenThermostat::EEPROM_readID(int adress)
     idCode[i] = Character;
   }
   Serial.println(idCode);
+}
+
+void OpenThermostat::postTemperature()
+{
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval) {
+    postData(TEMPERATURE_POST);
+
+    lastTemperaturePost = millis();
+  }
+}
+
+void OpenThermostat::postData(uint8_t type)
+{
+  if (!client.connect(host, httpsPort)) {
+    Serial.println("connection failed");
+    return;
+  }
+
+  if (client.verify(fingerprint, host)) {
+    Serial.println("certificate matches");
+  } else {
+    Serial.println("certificate doesn't match");
+    return;
+  }
+
+  String url = "/api/";
+  String data;
+  Serial.print("requesting URL: ");
+
+  switch(type) {
+    case TEMPERATURE_POST:
+      url += "post_data.php";
+
+      data += "thermostat_identifier=";
+      data += idCode;
+
+      data += "&temperature=";
+      data += temperature;
+      break;
+  }
+  Serial.println(url);
+
+  client.print(String("POST ") + url + " HTTP/1.1\r\n" +
+               "Host: " + host + "\r\n" +
+               "Cache-Control: no-cache\r\n" +
+               "Content-Type: application/x-www-form-urlencoded\r\n" +
+               "Content-Length: " + data.length() + "\r\n\r\n" +
+               ""+data+"\r\n");
 }
