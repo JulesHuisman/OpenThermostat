@@ -16,6 +16,9 @@
 #include "OpenThermostatScreen.h";
 #include "OpenThermostatDht.h";
 #include "include/defines.h";
+extern "C" {
+#include "gpio.h"
+}
 
 class OpenThermostat
 {

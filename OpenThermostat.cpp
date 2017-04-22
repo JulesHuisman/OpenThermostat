@@ -321,30 +321,24 @@ void OpenThermostat::readButton()
 void OpenThermostat::PinA()
 {
   detachInterrupt(ROTA_PIN);
-  readingA = digitalRead(ROTA_PIN);
-  readingB = digitalRead(ROTB_PIN);
-  if (readingA == HIGH && readingB == HIGH && aFlag) {
+  if (bitRead(gpio_input_get(), 12) == 1 && aFlag) {
     rotaryValue++;
-
     bFlag = 0;
     aFlag = 0;
   }
-  else if (readingA == HIGH && readingB == LOW) bFlag = 1;
+  else if (bitRead(gpio_input_get(), 12) == 0) bFlag = 1;
   attachInterrupt(ROTA_PIN, PinA, RISING);
 }
 
 void OpenThermostat::PinB()
 {
   detachInterrupt(ROTB_PIN);
-  readingA = digitalRead(ROTA_PIN);
-  readingB = digitalRead(ROTB_PIN);
-  if (readingA == HIGH && readingB == HIGH && bFlag) {
+  if (bitRead(gpio_input_get(), 4) == 1 && bFlag) {
     rotaryValue--;
-
     bFlag = 0;
     aFlag = 0;
   }
-  else if (readingB == HIGH && readingA == LOW) aFlag = 1;
+  else if (bitRead(gpio_input_get(), 4) == 0) aFlag = 1;
   attachInterrupt(ROTB_PIN, PinB, RISING);
 }
 
