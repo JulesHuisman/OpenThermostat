@@ -19,13 +19,13 @@ OpenThermostat::OpenThermostat()
   wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
   temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
   setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
-  temperaturePostInterval = 900000; //The time between temperature posts (15 min)
+  temperaturePostInterval = 30000; //The time between temperature posts (15 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
   previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
-  lastTemperaturePost  = 15000; //Forces posting the temperature on startup
+  lastTemperaturePost  = -temperaturePostInterval; //Forces posting the temperature on startup
 }
 
 void OpenThermostat::begin()
@@ -43,6 +43,7 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
 
+  WiFi.begin("Jules Wireless","kartoffelsalat");
   connectWIFI();
 
   Screen.homeScreen(0);
@@ -53,7 +54,7 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
-   getWifiStrength();
+   //getWifiStrength();
    readTemperature();
    postTemperature();
    readRotary();
@@ -362,15 +363,22 @@ void OpenThermostat::EEPROM_readID(int adress)
 
 void OpenThermostat::postTemperature()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && temperature != 0) {
     postData(TEMPERATURE_POST);
 
     lastTemperaturePost = millis();
   }
+
+  // while (client.connected()) {
+  //   String line = client.readStringUntil('\n');
+  //   Serial.println(line);
+  // }
 }
 
 void OpenThermostat::postData(uint8_t type)
 {
+  WiFiClientSecure client;
+
   if (!client.connect(host, httpsPort)) {
     Serial.println("connection failed");
     return;
@@ -403,7 +411,9 @@ void OpenThermostat::postData(uint8_t type)
   client.print(String("POST ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
                "Cache-Control: no-cache\r\n" +
+               "Connection: close\r\n" +
                "Content-Type: application/x-www-form-urlencoded\r\n" +
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
+
 }

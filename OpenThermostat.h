@@ -20,6 +20,9 @@ extern "C" {
 #include "gpio.h"
 }
 
+#define DEBUG_ESP_SSL
+#define DEBUG_SSL
+
 class OpenThermostat
 {
   public:
@@ -46,7 +49,6 @@ class OpenThermostat
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
-    WiFiClientSecure client;
     unsigned long lastWifiStrengthRead;
     unsigned long wifiStrengthReadInterval;
     unsigned long lastTemperatureRead;
