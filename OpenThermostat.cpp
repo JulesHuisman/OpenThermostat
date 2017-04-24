@@ -17,15 +17,17 @@ OpenThermostat::OpenThermostat()
   maxTemp = 25;
 
   wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
-  temperatureReadInterval = 10000; //How often to get the indoor temperature (10 s)
+  temperatureReadInterval = 4000; //How often to get the indoor temperature (10 s)
   setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
-  temperaturePostInterval = 30000; //The time between temperature posts (15 min)
+  temperaturePostInterval = 900000; //The time between temperature posts (15 min)
+  temperatureAvgInterval = 60000; //The time between adding to average temperature (1 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
   previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
   lastTemperaturePost  = -temperaturePostInterval; //Forces posting the temperature on startup
+  lastTemperatureAvg  = -temperatureAvgInterval; //Forces adding to average temperature on startup
 }
 
 void OpenThermostat::begin()
@@ -43,7 +45,6 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
 
-  WiFi.begin("Jules Wireless","kartoffelsalat");
   connectWIFI();
 
   Screen.homeScreen(0);
@@ -54,7 +55,7 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
-   //getWifiStrength();
+   getWifiStrength();
    readTemperature();
    postTemperature();
    readRotary();
@@ -189,9 +190,6 @@ void OpenThermostat::runAP()
 void OpenThermostat::submitForm() {
   if (webServer.args() > 0 )
   {
-    Serial.println(webServer.arg(0));
-    Serial.println(webServer.arg(1));
-
     WiFi.begin(webServer.arg(0).c_str(), webServer.arg(1).c_str());
     accesPointActive = false;
     connectWIFI();
@@ -231,6 +229,12 @@ void OpenThermostat::readTemperature()
       Screen.homeScreen(temperature);
       Screen.removeSidebarIcon(THERMOMETER_ICON);
     }
+
+    if ((millis() - lastTemperatureAvg) > temperatureAvgInterval) {
+      addAvgTemperature(temperature);
+      lastTemperatureAvg = millis();
+    }
+
     lastTemperatureRead = millis();
   }
 }
@@ -280,7 +284,7 @@ void OpenThermostat::readRotary()
 
 void OpenThermostat::readButton()
 {
-  int reading = analogRead(BUT_PIN);
+  int reading = 0; //analogRead(BUT_PIN)
   if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
     lastButtonRead = millis();
 
@@ -345,7 +349,8 @@ void OpenThermostat::PinB()
 
 void OpenThermostat::EEPROM_writeID(int adress, char Str[])
 {
-  for (int i = 0; i < 9; i++){
+  for (int i = 0; i < 9; i++)
+  {
     EEPROM.write(adress, Str[i]);
     adress++;
   }
@@ -353,47 +358,65 @@ void OpenThermostat::EEPROM_writeID(int adress, char Str[])
 
 void OpenThermostat::EEPROM_readID(int adress)
 {
-  for (int i = 0; i < 9; i++){
+  for (int i = 0; i < 9; i++)
+  {
     char Character = EEPROM.read(adress);
     adress++;
     idCode[i] = Character;
   }
-  Serial.println(idCode);
+}
+
+void OpenThermostat::addAvgTemperature(float _temperature)
+{
+  for (uint8_t i = 0; i < 15; i++)
+  {
+    if (temperatureArray[i] == 0) {
+      temperatureArray[i] = _temperature;
+      return;
+    }
+  }
+  for (uint8_t i = 0; i < 14; i++)
+  {
+    temperatureArray[i] = temperatureArray[i+1];
+  }
+  temperatureArray[14] = _temperature;
+}
+
+float OpenThermostat::getAvgTemperature()
+{
+  uint8_t count = 0;
+  float totalTemperature = 0;
+  for (uint8_t i = 0; i < 15; i++)
+  {
+    if (temperatureArray[i] != 0) {
+      totalTemperature += temperatureArray[i];
+      count++;
+    }
+  }
+  return (totalTemperature/count);
 }
 
 void OpenThermostat::postTemperature()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && temperature != 0) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && getAvgTemperature() != 0) {
     postData(TEMPERATURE_POST);
 
     lastTemperaturePost = millis();
   }
-
-  // while (client.connected()) {
-  //   String line = client.readStringUntil('\n');
-  //   Serial.println(line);
-  // }
 }
 
 void OpenThermostat::postData(uint8_t type)
 {
-  WiFiClientSecure client;
-
   if (!client.connect(host, httpsPort)) {
-    Serial.println("connection failed");
     return;
   }
 
-  if (client.verify(fingerprint, host)) {
-    Serial.println("certificate matches");
-  } else {
-    Serial.println("certificate doesn't match");
+  if (!client.verify(fingerprint, host)) {
     return;
   }
 
   String url = "/api/";
   String data;
-  Serial.print("requesting URL: ");
 
   switch(type) {
     case TEMPERATURE_POST:
@@ -403,10 +426,9 @@ void OpenThermostat::postData(uint8_t type)
       data += idCode;
 
       data += "&temperature=";
-      data += temperature;
+      data += getAvgTemperature();
       break;
   }
-  Serial.println(url);
 
   client.print(String("POST ") + url + " HTTP/1.1\r\n" +
                "Host: " + host + "\r\n" +
@@ -415,5 +437,4 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Type: application/x-www-form-urlencoded\r\n" +
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
-
 }

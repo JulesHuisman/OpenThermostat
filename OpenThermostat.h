@@ -10,7 +10,7 @@
 #include <ESP8266WiFi.h>;
 #include <DNSServer.h>;
 #include <ESP8266WebServer.h>;
-#include <WiFiClientSecure.h>
+#include <WiFiClientSecure.h>;
 #include <EEPROM.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
@@ -44,11 +44,14 @@ class OpenThermostat
     static void PinB();
     void EEPROM_writeID(int adress, char Str[]);
     void EEPROM_readID(int adress);
+    float getAvgTemperature();
+    void addAvgTemperature(float _temperature);
     void postTemperature();
     void postData(uint8_t type);
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
+    WiFiClientSecure client;
     unsigned long lastWifiStrengthRead;
     unsigned long wifiStrengthReadInterval;
     unsigned long lastTemperatureRead;
@@ -59,6 +62,7 @@ class OpenThermostat
     unsigned long buttonReadInterval;
     unsigned long lastTemperaturePost;
     unsigned long temperaturePostInterval;
+    unsigned long lastTemperatureAvg,temperatureAvgInterval;
     int previous;
     float setTemp;
     float tempCorrection;
@@ -66,6 +70,7 @@ class OpenThermostat
     int maxTemp;
     uint8_t tempMode;
     float temperature;
+    float temperatureArray[15];
     char SSID[32];
     char *idCode = "000000000";
     int8_t activeMenu;
