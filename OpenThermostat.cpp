@@ -10,7 +10,7 @@ volatile uint8_t OpenThermostat::readingB;
 
 OpenThermostat::OpenThermostat()
 {
-  tempCorrection = -3;
+  tempCorrection = 0;
   tempMode = CELCIUS;
 
   minTemp = 0;
@@ -45,11 +45,12 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
 
+  idCode = "8f4cd3sd5";
+
   connectWIFI();
 
   Screen.homeScreen(0);
 
-  idCode = "8f4cd3sd5";
 }
 
 //The loop function of the library
@@ -110,6 +111,7 @@ void OpenThermostat::connectWIFI()
 void OpenThermostat::getSettings()
 {
   Screen.loadScreen("Fetching settings");
+  getData(GET_STARTUP_SETTINGS);
 }
 
 //Get the active SSID name and convert it to a character array
@@ -290,6 +292,7 @@ void OpenThermostat::readButton()
 {
   int reading = analogRead(BUT_PIN);
   delay(3); //Delay needed to keep wifi connected
+
   if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
     lastButtonRead = millis();
 
@@ -310,12 +313,14 @@ void OpenThermostat::readButton()
         case MAIN_MENU_ID:
           Screen.valueScreen("ID Code",idCode);
           break;
-        case MAIN_MENU_METRICS:
+        case MAIN_MENU_UNIT:
+          char *unitType;
+          if (tempMode == 0) unitType = "C";
+          else if (tempMode == 1) unitType = "F";
+          Screen.valueScreen("Unit",unitType);
           break;
-        case MAIN_MENU_TIMEZONE:
-          break;
-        case MAIN_MENU_INFO:
-          Screen.valueScreen("Version","1.0");
+        case MAIN_MENU_VERSION:
+          Screen.valueScreen("Version",version);
           break;
       }
       break;
@@ -442,4 +447,56 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Type: application/x-www-form-urlencoded\r\n" +
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
+}
+
+void OpenThermostat::getData(uint8_t type)
+{
+  if (!client.connect(host, httpsPort)) {
+    return;
+  }
+
+  if (!client.verify(fingerprint, host)) {
+    return;
+  }
+
+  String url = "/api/";
+
+  switch(type) {
+    case GET_STARTUP_SETTINGS:
+      url += "get_data?data=startup_settings";
+      url += "&thermostat_identifier=";
+      url += idCode;
+      break;
+  }
+
+  client.print(String("GET ") + url + " HTTP/1.1\r\n" +
+               "Host: " + host + "\r\n" +
+               "Connection: close\r\n\r\n");
+
+  //Read the response from the server
+  while (client.connected()) {
+    String line = client.readStringUntil('\n');
+
+    //If the json line is found
+    if (line.startsWith("{")) {
+      Serial.println(line);
+
+      const char *json = line.c_str();
+      Serial.println(json);
+
+      JsonObject& jsonResponse = jsonBuffer.parseObject(json);
+
+      // Test if parsing succeeds.
+      if (!jsonResponse.success()) {
+        return;
+      }
+
+      switch(type) {
+        case GET_STARTUP_SETTINGS:
+          tempCorrection = jsonResponse["temp_correction"];
+          tempMode = jsonResponse["unit"];
+          break;
+      }
+    }
+  }
 }
