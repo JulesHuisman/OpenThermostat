@@ -94,8 +94,7 @@ void OpenThermostat::connectWIFI()
   switch (WiFi.status()) {
     //Show a succes message when connected
     case WL_CONNECTED:
-      Screen.loadScreen("Connected!");
-      delay(1300);
+      getSettings();
       break;
 
     //If unable to connect start an access point
@@ -106,6 +105,11 @@ void OpenThermostat::connectWIFI()
       while(accesPointActive) runAP();
       break;
   }
+}
+
+void OpenThermostat::getSettings()
+{
+  Screen.loadScreen("Fetching settings");
 }
 
 //Get the active SSID name and convert it to a character array
@@ -284,7 +288,8 @@ void OpenThermostat::readRotary()
 
 void OpenThermostat::readButton()
 {
-  int reading = 0; //analogRead(BUT_PIN)
+  int reading = analogRead(BUT_PIN);
+  delay(3); //Delay needed to keep wifi connected
   if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
     lastButtonRead = millis();
 
@@ -398,11 +403,11 @@ float OpenThermostat::getAvgTemperature()
 
 void OpenThermostat::postTemperature()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && getAvgTemperature() != 0) {
-    postData(TEMPERATURE_POST);
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0) {
+      postData(TEMPERATURE_POST);
 
-    lastTemperaturePost = millis();
-  }
+      lastTemperaturePost = millis();
+    }
 }
 
 void OpenThermostat::postData(uint8_t type)

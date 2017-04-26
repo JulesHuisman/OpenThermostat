@@ -12,6 +12,7 @@
 #include <ESP8266WebServer.h>;
 #include <WiFiClientSecure.h>;
 #include <EEPROM.h>;
+#include <ArduinoJson.h>;
 #include "Arduino.h";
 #include "OpenThermostatScreen.h";
 #include "OpenThermostatDht.h";
@@ -32,6 +33,7 @@ class OpenThermostat
     void setID(char ID[]);
   private:
     void connectWIFI();
+    void getSettings();
     void getSSID();
     void setupAP();
     void runAP();
@@ -52,16 +54,11 @@ class OpenThermostat
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
     WiFiClientSecure client;
-    unsigned long lastWifiStrengthRead;
-    unsigned long wifiStrengthReadInterval;
-    unsigned long lastTemperatureRead;
-    unsigned long temperatureReadInterval;
-    unsigned long lastSetTemperatureRead;
-    unsigned long setTemperatureInterval;
-    unsigned long lastButtonRead;
-    unsigned long buttonReadInterval;
-    unsigned long lastTemperaturePost;
-    unsigned long temperaturePostInterval;
+    unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
+    unsigned long lastTemperatureRead,temperatureReadInterval;
+    unsigned long lastSetTemperatureRead,setTemperatureInterval;
+    unsigned long lastButtonRead,buttonReadInterval;
+    unsigned long lastTemperaturePost,temperaturePostInterval;
     unsigned long lastTemperatureAvg,temperatureAvgInterval;
     int previous;
     float setTemp;
