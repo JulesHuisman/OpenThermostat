@@ -48,6 +48,7 @@ class OpenThermostat
     void EEPROM_readID(int adress);
     float getAvgTemperature();
     void addAvgTemperature(float _temperature);
+    void postTemperatureAvg();
     void postTemperature();
     void postData(uint8_t type);
     void getData(uint8_t type);
@@ -58,12 +59,16 @@ class OpenThermostat
     StaticJsonBuffer<200> jsonBuffer;
     unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
     unsigned long lastTemperatureRead,temperatureReadInterval;
-    unsigned long lastSetTemperatureRead,setTemperatureInterval;
+    unsigned long lasttargetTemperatureRead,targetTemperatureInterval;
     unsigned long lastButtonRead,buttonReadInterval;
     unsigned long lastTemperaturePost,temperaturePostInterval;
     unsigned long lastTemperatureAvg,temperatureAvgInterval;
+    unsigned long lastTemperatureGet,temperatureGetInterval;
     int previous;
-    float setTemp;
+    float outdoorTemp;
+    float targetTemp;
+    float targetTempWeb;
+    float targetTempWebOld;
     float tempCorrection;
     int minTemp;
     int maxTemp;

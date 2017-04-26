@@ -39,5 +39,6 @@
 #define MAIN_MENU_VERSION 4
 
 //Define the different type of HTTP posts and gets
-#define TEMPERATURE_POST 0
+#define TEMPERATURE_POST     0
 #define GET_STARTUP_SETTINGS 1
+#define GET_TEMPERATURE      2

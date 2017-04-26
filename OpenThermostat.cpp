@@ -18,9 +18,10 @@ OpenThermostat::OpenThermostat()
 
   wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
   temperatureReadInterval = 4000; //How often to get the indoor temperature (10 s)
-  setTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
+  targetTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
   temperaturePostInterval = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval = 60000; //The time between adding to average temperature (1 min)
+  temperatureGetInterval = 60000; //How often to post and get the temperature and target temperature (1 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
   previous = 0;
 
@@ -58,6 +59,7 @@ void OpenThermostat::run()
 {
    getWifiStrength();
    readTemperature();
+   postTemperatureAvg();
    postTemperature();
    readRotary();
    readButton();
@@ -220,7 +222,7 @@ void OpenThermostat::getWifiStrength()
 void OpenThermostat::readTemperature()
 {
   //Only read the temperature every 10 seconds and user is not setting the target temperature
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lastSetTemperatureRead) > setTemperatureInterval)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lasttargetTemperatureRead) > targetTemperatureInterval)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -253,19 +255,20 @@ void OpenThermostat::readRotary()
 
     case HOME_SCREEN:
     {
-      float change = map((millis()-lastSetTemperatureRead),0,100,5,1);
+      float change = map((millis()-lasttargetTemperatureRead),0,100,5,1);
       change = constrain(change,1,10);
       change /= 10;
       if (rotaryValue > rotaryValueOld) {
-        setTemp += change;
+        targetTemp += change;
       }
       else if (rotaryValue < rotaryValueOld) {
-        setTemp -= change;
+        targetTemp -= change;
       }
+      targetTemp = constrain(targetTemp,0,30);
       lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
-      lastSetTemperatureRead = millis();
+      lasttargetTemperatureRead = millis();
       Screen.addSidebarIcon(THERMOMETER_ICON);
-      Screen.homeScreen(setTemp);
+      Screen.homeScreen(targetTemp);
       break;
     }
 
@@ -293,7 +296,7 @@ void OpenThermostat::readButton()
   int reading = analogRead(BUT_PIN);
   delay(3); //Delay needed to keep wifi connected
 
-  if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 20) {
+  if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 200) {
     lastButtonRead = millis();
 
     //Check the current screen
@@ -406,12 +409,21 @@ float OpenThermostat::getAvgTemperature()
   return (totalTemperature/count);
 }
 
-void OpenThermostat::postTemperature()
+void OpenThermostat::postTemperatureAvg()
 {
   if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0) {
       postData(TEMPERATURE_POST);
 
       lastTemperaturePost = millis();
+    }
+}
+
+void OpenThermostat::postTemperature()
+{
+  if ((millis() - lastTemperatureGet) > temperatureGetInterval && temperature != 0) {
+      getData(GET_TEMPERATURE);
+
+      lastTemperatureGet = millis();
     }
 }
 
@@ -462,6 +474,15 @@ void OpenThermostat::getData(uint8_t type)
   String url = "/api/";
 
   switch(type) {
+    case GET_TEMPERATURE:
+      url += "get_data?data=temperature";
+      url += "&temperature=";
+      url += temperature;
+      url += "&thermostat_target=";
+      url += targetTemp;
+      url += "&thermostat_identifier=";
+      url += idCode;
+      break;
     case GET_STARTUP_SETTINGS:
       url += "get_data?data=startup_settings";
       url += "&thermostat_identifier=";
@@ -486,15 +507,22 @@ void OpenThermostat::getData(uint8_t type)
 
       JsonObject& jsonResponse = jsonBuffer.parseObject(json);
 
-      // Test if parsing succeeds.
+      // Test if parsing succeeds
       if (!jsonResponse.success()) {
         return;
       }
 
       switch(type) {
+        case GET_TEMPERATURE:
+          targetTempWeb = jsonResponse["web_target"];
+          if (targetTempWeb != targetTempWebOld) {
+            targetTemp = targetTempWebOld = targetTempWeb;
+          }
+          break;
         case GET_STARTUP_SETTINGS:
+          targetTemp = targetTempWeb = targetTempWebOld = jsonResponse["web_target"];
           tempCorrection = jsonResponse["temp_correction"];
-          tempMode = jsonResponse["unit"];
+          tempMode       = jsonResponse["unit"];
           break;
       }
     }
