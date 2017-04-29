@@ -42,3 +42,4 @@
 #define TEMPERATURE_POST     0
 #define GET_STARTUP_SETTINGS 1
 #define GET_TEMPERATURE      2
+#define GET_SETTINGS         3

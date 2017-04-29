@@ -22,13 +22,15 @@ OpenThermostat::OpenThermostat()
   temperaturePostInterval = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval = 60000; //The time between adding to average temperature (1 min)
   temperatureGetInterval = 60000; //How often to post and get the temperature and target temperature (1 min)
+  settingsGetInterval = 300000; //How often toget the current settings and updates (5 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
   previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
   lastTemperaturePost  = -temperaturePostInterval; //Forces posting the temperature on startup
-  lastTemperatureAvg  = -temperatureAvgInterval; //Forces adding to average temperature on startup
+  lastTemperatureAvg   = -temperatureAvgInterval; //Forces adding to average temperature on startup
+  lastSettingsGet      = -settingsGetInterval; //Forces getting the settings on startup
 }
 
 void OpenThermostat::begin()
@@ -46,7 +48,7 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
 
-  idCode = "8f4cd3sd5";
+  idCode = "7g85hd9fg5gfh7yj";
 
   connectWIFI();
 
@@ -61,6 +63,7 @@ void OpenThermostat::run()
    readTemperature();
    postTemperatureAvg();
    postTemperature();
+   getSettings();
    readRotary();
    readButton();
 }
@@ -97,7 +100,7 @@ void OpenThermostat::connectWIFI()
   switch (WiFi.status()) {
     //Show a succes message when connected
     case WL_CONNECTED:
-      getSettings();
+      getStartupSettings();
       break;
 
     //If unable to connect start an access point
@@ -110,7 +113,7 @@ void OpenThermostat::connectWIFI()
   }
 }
 
-void OpenThermostat::getSettings()
+void OpenThermostat::getStartupSettings()
 {
   Screen.loadScreen("Fetching settings");
   getData(GET_STARTUP_SETTINGS);
@@ -238,6 +241,7 @@ void OpenThermostat::readTemperature()
       Screen.removeSidebarIcon(THERMOMETER_ICON);
     }
 
+    //Add the current temperature to the average temperature
     if ((millis() - lastTemperatureAvg) > temperatureAvgInterval) {
       addAvgTemperature(temperature);
       lastTemperatureAvg = millis();
@@ -381,6 +385,10 @@ void OpenThermostat::EEPROM_readID(int adress)
 
 void OpenThermostat::addAvgTemperature(float _temperature)
 {
+  if (tempMode) {
+    _temperature = ((_temperature - 32) * 5)/9;
+  }
+
   for (uint8_t i = 0; i < 15; i++)
   {
     if (temperatureArray[i] == 0) {
@@ -427,8 +435,19 @@ void OpenThermostat::postTemperature()
     }
 }
 
+void OpenThermostat::getSettings()
+{
+  if ((millis() - lastSettingsGet) > settingsGetInterval) {
+      getData(GET_SETTINGS);
+
+      lastSettingsGet = millis();
+    }
+}
+
 void OpenThermostat::postData(uint8_t type)
 {
+  WiFiClientSecure client;
+
   if (!client.connect(host, httpsPort)) {
     return;
   }
@@ -463,6 +482,9 @@ void OpenThermostat::postData(uint8_t type)
 
 void OpenThermostat::getData(uint8_t type)
 {
+  StaticJsonBuffer<200> jsonBuffer;
+  WiFiClientSecure client;
+
   if (!client.connect(host, httpsPort)) {
     return;
   }
@@ -488,6 +510,11 @@ void OpenThermostat::getData(uint8_t type)
       url += "&thermostat_identifier=";
       url += idCode;
       break;
+    case GET_SETTINGS:
+      url += "get_data?data=settings";
+      url += "&thermostat_identifier=";
+      url += idCode;
+      break;
   }
 
   client.print(String("GET ") + url + " HTTP/1.1\r\n" +
@@ -503,12 +530,12 @@ void OpenThermostat::getData(uint8_t type)
       Serial.println(line);
 
       const char *json = line.c_str();
-      Serial.println(json);
 
       JsonObject& jsonResponse = jsonBuffer.parseObject(json);
 
       // Test if parsing succeeds
       if (!jsonResponse.success()) {
+        Serial.println("JSON Parsing failed");
         return;
       }
 
@@ -521,8 +548,18 @@ void OpenThermostat::getData(uint8_t type)
           break;
         case GET_STARTUP_SETTINGS:
           targetTemp = targetTempWeb = targetTempWebOld = jsonResponse["web_target"];
-          tempCorrection = jsonResponse["temp_correction"];
-          tempMode       = jsonResponse["unit"];
+          tempCorrection  = jsonResponse["temp_correction"];
+          tempMode        = jsonResponse["unit"];
+          break;
+        case GET_SETTINGS:
+          tempCorrection  = jsonResponse["temp_correction"];
+          tempMode        = jsonResponse["unit"];
+          updateAvailable = jsonResponse["update_available"];
+
+          if (updateAvailable == 1) {
+            Screen.addSidebarIcon(UPDATE_ICON);
+            Serial.println("Update");
+          }
           break;
       }
     }

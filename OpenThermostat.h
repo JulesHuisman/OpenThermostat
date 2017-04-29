@@ -33,7 +33,7 @@ class OpenThermostat
     void setID(char ID[]);
   private:
     void connectWIFI();
-    void getSettings();
+    void getStartupSettings();
     void getSSID();
     void setupAP();
     void runAP();
@@ -50,13 +50,13 @@ class OpenThermostat
     void addAvgTemperature(float _temperature);
     void postTemperatureAvg();
     void postTemperature();
+    void getSettings();
     void postData(uint8_t type);
     void getData(uint8_t type);
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
-    WiFiClientSecure client;
-    StaticJsonBuffer<200> jsonBuffer;
+    StaticJsonBuffer<400> jsonBuffer;
     unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
     unsigned long lastTemperatureRead,temperatureReadInterval;
     unsigned long lasttargetTemperatureRead,targetTemperatureInterval;
@@ -64,6 +64,7 @@ class OpenThermostat
     unsigned long lastTemperaturePost,temperaturePostInterval;
     unsigned long lastTemperatureAvg,temperatureAvgInterval;
     unsigned long lastTemperatureGet,temperatureGetInterval;
+    unsigned long lastSettingsGet,settingsGetInterval;
     int previous;
     float outdoorTemp;
     float targetTemp;
@@ -76,8 +77,9 @@ class OpenThermostat
     float temperature;
     float temperatureArray[15];
     char SSID[32];
-    char *idCode = "000000000";
+    char *idCode = "0000000000000000";
     char *version = "0.0.0";
+    uint8_t updateAvailable;
     int8_t activeMenu;
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
