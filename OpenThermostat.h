@@ -30,7 +30,6 @@ class OpenThermostat
     OpenThermostat();
     void begin();
     void run();
-    void setID(char ID[]);
   private:
     void connectWIFI();
     void getStartupSettings();
@@ -44,8 +43,7 @@ class OpenThermostat
     void readRotary();
     static void PinA();
     static void PinB();
-    void EEPROM_writeID(int adress, char Str[]);
-    void EEPROM_readID(int adress);
+    void EEPROM_readID();
     float getAvgTemperature();
     void addAvgTemperature(float _temperature);
     void postTemperatureAvg();
