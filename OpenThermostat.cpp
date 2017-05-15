@@ -37,10 +37,10 @@ void OpenThermostat::begin()
 {
   Screen.begin();
   Dht.begin();
-  EEPROM.begin(9);
+  EEPROM.begin(16);
 
   //Get the ID code for this thermostat and save it in a variable
-  EEPROM_readID(0);
+  EEPROM_readID();
 
   //PinModes and intterupts for the rotary encoder
   pinMode(ROTA_PIN, INPUT_PULLUP);
@@ -64,14 +64,6 @@ void OpenThermostat::run()
    getSettings();
    readRotary();
    readButton();
-}
-
-//Writes an ID code in the EEPROM
-void OpenThermostat::setID(char ID[])
-{
-  EEPROM.begin(9);
-  EEPROM_writeID(0,ID);
-  EEPROM_readID(0);
 }
 
 void OpenThermostat::connectWIFI()
@@ -362,22 +354,11 @@ void OpenThermostat::PinB()
   attachInterrupt(ROTB_PIN, PinB, RISING);
 }
 
-void OpenThermostat::EEPROM_writeID(int adress, char Str[])
+void OpenThermostat::EEPROM_readID()
 {
-  for (int i = 0; i < 9; i++)
+  for (int i = 0; i < 16; i++)
   {
-    EEPROM.write(adress, Str[i]);
-    adress++;
-  }
-}
-
-void OpenThermostat::EEPROM_readID(int adress)
-{
-  for (int i = 0; i < 9; i++)
-  {
-    char Character = EEPROM.read(adress);
-    adress++;
-    idCode[i] = Character;
+    idCode[i] = EEPROM.read(i);
   }
 }
 
