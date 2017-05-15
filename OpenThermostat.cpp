@@ -48,7 +48,6 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
 
-
   connectWIFI();
 
   Screen.homeScreen(0);
