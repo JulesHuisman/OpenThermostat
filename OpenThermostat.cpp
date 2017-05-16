@@ -21,16 +21,17 @@ OpenThermostat::OpenThermostat()
   targetTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
   temperaturePostInterval = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval = 60000; //The time between adding to average temperature (1 min)
-  temperatureGetInterval = 60000; //How often to post and get the temperature and target temperature (1 min)
+  scheduleGetInterval = 60000; //How often to post and get the temperature and target temperature (1 min)
   settingsGetInterval = 300000; //How often toget the current settings and updates (5 min)
   buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
+  heatingInterval = 60000; //Minumum interval required between heating (1 min) (gets adapted when getting settings)
   previous = 0;
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
   lastTemperaturePost  = -temperaturePostInterval; //Forces posting the temperature on startup
   lastTemperatureAvg   = -temperatureAvgInterval; //Forces adding to average temperature on startup
-  lastSettingsGet      = -settingsGetInterval; //Forces getting the settings on startup
+  lastHeating          = -heatingInterval; //Forces checking the schedule on startup
 }
 
 void OpenThermostat::begin()
@@ -45,8 +46,11 @@ void OpenThermostat::begin()
   //PinModes and intterupts for the rotary encoder
   pinMode(ROTA_PIN, INPUT_PULLUP);
   pinMode(ROTB_PIN, INPUT_PULLUP);
+  pinMode(HEATING_PIN,OUTPUT);
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
+
+  digitalWrite(HEATING_PIN,LOW);
 
   connectWIFI();
 
@@ -60,7 +64,7 @@ void OpenThermostat::run()
    getWifiStrength();
    readTemperature();
    postTemperatureAvg();
-   postTemperature();
+   getSchedule();
    getSettings();
    readRotary();
    readButton();
@@ -106,7 +110,9 @@ void OpenThermostat::connectWIFI()
 void OpenThermostat::getStartupSettings()
 {
   Screen.loadScreen("Fetching settings");
-  getData(GET_STARTUP_SETTINGS);
+  getData(GET_SETTINGS);
+  delay(5);
+  getData(GET_SCHEDULE);
 }
 
 //Get the active SSID name and convert it to a character array
@@ -358,7 +364,8 @@ void OpenThermostat::EEPROM_readID()
 {
   for (int i = 0; i < 16; i++)
   {
-    idCode[i] = EEPROM.read(i);
+    char Character = EEPROM.read(i);
+    idCode[i] = Character;
   }
 }
 
@@ -396,6 +403,49 @@ float OpenThermostat::getAvgTemperature()
   return (totalTemperature/count);
 }
 
+//Check the current schedule and checks if it needs to start heating
+void OpenThermostat::checkSchedule() {
+  bool scheduleActive = false;
+
+  for (uint8_t i = 0; i < scheduleLength; i++) {
+    if (time >= schedule[i][0] && time < schedule[i][1]) {
+
+      targetTemp = schedule[i][2];
+      Serial.println(targetTemp);
+      scheduleActive = true;
+      break;
+    }
+  }
+
+  //If there is no active module default to resting temperature
+  if (!scheduleActive) {
+    targetTemp = restingTemp;
+    Serial.println("Resting");
+  }
+
+  if ((targetTemp-temperature) > 0.2) {
+    heatingOn(true);
+  } else {
+    heatingOn(false);
+  }
+}
+
+void OpenThermostat::heatingOn(bool _heating) {
+  if (_heating && ((millis() - lastHeating) > heatingInterval) && heating == false) {
+    Screen.addSidebarIcon(HEATING_ICON);
+    digitalWrite(HEATING_PIN,HIGH);
+
+    lastHeating = millis();
+    heating = true;
+  }
+  else if (!_heating && heating == true) {
+    Screen.removeSidebarIcon(HEATING_ICON);
+    digitalWrite(HEATING_PIN,LOW);
+
+    heating = false;
+  }
+}
+
 void OpenThermostat::postTemperatureAvg()
 {
   if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0) {
@@ -405,12 +455,13 @@ void OpenThermostat::postTemperatureAvg()
     }
 }
 
-void OpenThermostat::postTemperature()
+//Posts the current indoor temperature, server returns schedule if available
+void OpenThermostat::getSchedule()
 {
-  if ((millis() - lastTemperatureGet) > temperatureGetInterval && temperature != 0) {
-      getData(GET_TEMPERATURE);
+  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0) {
+      getData(GET_SCHEDULE);
 
-      lastTemperatureGet = millis();
+      lastScheduleGet = millis();
     }
 }
 
@@ -461,7 +512,7 @@ void OpenThermostat::postData(uint8_t type)
 
 void OpenThermostat::getData(uint8_t type)
 {
-  StaticJsonBuffer<200> jsonBuffer;
+  StaticJsonBuffer<1024> jsonBuffer;
   WiFiClientSecure client;
 
   if (!client.connect(host, httpsPort)) {
@@ -475,17 +526,12 @@ void OpenThermostat::getData(uint8_t type)
   String url = "/api/";
 
   switch(type) {
-    case GET_TEMPERATURE:
-      url += "get_data?data=temperature";
+    case GET_SCHEDULE:
+      url += "get_data?data=schedule";
       url += "&temperature=";
       url += temperature;
       url += "&thermostat_target=";
       url += targetTemp;
-      url += "&thermostat_identifier=";
-      url += idCode;
-      break;
-    case GET_STARTUP_SETTINGS:
-      url += "get_data?data=startup_settings";
       url += "&thermostat_identifier=";
       url += idCode;
       break;
@@ -510,7 +556,7 @@ void OpenThermostat::getData(uint8_t type)
 
       const char *json = line.c_str();
 
-      JsonObject& jsonResponse = jsonBuffer.parseObject(json);
+      JsonObject& jsonResponse = jsonBuffer.parseObject(json, 2);
 
       // Test if parsing succeeds
       if (!jsonResponse.success()) {
@@ -518,26 +564,50 @@ void OpenThermostat::getData(uint8_t type)
         return;
       }
 
+      int scheduleAvailable;
+      scheduleLength;
+
       switch(type) {
-        case GET_TEMPERATURE:
-          targetTempWeb = jsonResponse["web_target"];
-          if (targetTempWeb != targetTempWebOld) {
-            targetTemp = targetTempWebOld = targetTempWeb;
+        case GET_SCHEDULE:
+          scheduleAvailable = jsonResponse["available"];
+          time              = jsonResponse["time"];
+
+          if (scheduleAvailable == 1) {
+
+            scheduleLength = jsonResponse["len"];
+
+            for (uint8_t i = 0; i < scheduleLength; i++) {
+              String key = "";
+              key += String(i);
+              JsonArray& module = jsonResponse[""+key+""];
+
+              int start  = module[0];
+              int end    = module[1];
+              float temp = module[2];
+
+              //Times 15 to go from quarters to minutes
+              start *= 15;
+              end   *= 15;
+              end   += start;
+
+              schedule[i][0] = start;
+              schedule[i][1] = end;
+              schedule[i][2] = temp;
+            }
           }
-          break;
-        case GET_STARTUP_SETTINGS:
-          targetTemp = targetTempWeb = targetTempWebOld = jsonResponse["web_target"];
-          tempCorrection  = jsonResponse["temp_correction"];
-          tempMode        = jsonResponse["unit"];
+          checkSchedule();
           break;
         case GET_SETTINGS:
           tempCorrection  = jsonResponse["temp_correction"];
           tempMode        = jsonResponse["unit"];
           updateAvailable = jsonResponse["update_available"];
+          restingTemp     = jsonResponse["rest_temperature"];
+          heatingInterval = jsonResponse["heating_interval"];
+
+          heatingInterval *= 60000;
 
           if (updateAvailable == 1) {
             Screen.addSidebarIcon(UPDATE_ICON);
-            Serial.println("Update");
           }
           break;
       }

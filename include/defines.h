@@ -1,8 +1,9 @@
 
 //Define the pins the screen is connected to, the other two screen pins are SPI hardware pins
-#define CS_PIN  15
-#define DC_PIN  5
-#define RST_PIN 0
+#define CS_PIN      15
+#define DC_PIN      5
+#define RST_PIN     0
+#define HEATING_PIN 2
 
 //Define the different screens that exist
 #define LOAD_SCREEN  1
@@ -40,6 +41,5 @@
 
 //Define the different type of HTTP posts and gets
 #define TEMPERATURE_POST     0
-#define GET_STARTUP_SETTINGS 1
-#define GET_TEMPERATURE      2
-#define GET_SETTINGS         3
+#define GET_SCHEDULE         1
+#define GET_SETTINGS         2
