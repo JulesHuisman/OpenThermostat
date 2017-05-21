@@ -41,5 +41,6 @@
 
 //Define the different type of HTTP posts and gets
 #define TEMPERATURE_POST     0
-#define GET_SCHEDULE         1
-#define GET_SETTINGS         2
+#define HEATING_POST         1
+#define GET_SCHEDULE         2
+#define GET_SETTINGS         3

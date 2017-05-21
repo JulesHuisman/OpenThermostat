@@ -16,16 +16,18 @@ OpenThermostat::OpenThermostat()
   minTemp = 0;
   maxTemp = 25;
 
-  wifiStrengthReadInterval = 60000; //How often to read wifi strength (60 s)
-  temperatureReadInterval = 4000; //How often to get the indoor temperature (10 s)
-  targetTemperatureInterval = 2500; //How long to display the set temperature (2.5 s)
-  temperaturePostInterval = 900000; //The time between temperature posts (15 min)
-  temperatureAvgInterval = 60000; //The time between adding to average temperature (1 min)
-  scheduleGetInterval = 60000; //How often to post and get the temperature and target temperature (1 min)
-  settingsGetInterval = 300000; //How often toget the current settings and updates (5 min)
-  buttonReadInterval = 150; //Debounce delay for readButton() (150 ms)
-  heatingInterval = 60000; //Minumum interval required between heating (1 min) (gets adapted when getting settings)
   previous = 0;
+
+  wifiStrengthReadInterval         = 60000; //How often to read wifi strength (60 s)
+  temperatureReadInterval          = 4000; //How often to get the indoor temperature (10 s)
+  targetTemperatureeratureInterval = 2500; //How long to display the set temperature (2.5 s)
+  temperaturePostInterval          = 900000; //The time between temperature posts (15 min)
+  temperatureAvgInterval           = 60000; //The time between adding to average temperature (1 min)
+  scheduleGetInterval              = 60000; //How often to post and get the temperature and target temperature (1 min)
+  settingsGetInterval              = 300000; //How often toget the current settings and updates (5 min)
+  buttonReadInterval               = 150; //Debounce delay for readButton() (150 ms)
+  heatingInterval                  = 60000; //Minumum interval required between heating (1 min) (gets adapted when getting settings)
+  heatingCheckInterval             = 10000; //How often to check the heating status
 
   lastWifiStrengthRead = -wifiStrengthReadInterval; //Forces get wifi strength on startup
   lastTemperatureRead  = -temperatureReadInterval; //Forces get temperature on startup
@@ -68,6 +70,7 @@ void OpenThermostat::run()
    getSettings();
    readRotary();
    readButton();
+   checkHeating();
 }
 
 void OpenThermostat::connectWIFI()
@@ -221,7 +224,7 @@ void OpenThermostat::getWifiStrength()
 void OpenThermostat::readTemperature()
 {
   //Only read the temperature every 10 seconds and user is not setting the target temperature
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lasttargetTemperatureRead) > targetTemperatureInterval)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lasttargetTemperatureRead) > targetTemperatureeratureInterval)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -247,28 +250,28 @@ void OpenThermostat::readTemperature()
   }
 }
 
+//Check if the rotary has been turned
 void OpenThermostat::readRotary()
 {
   if (rotaryValue == rotaryValueOld) return;
 
   switch (Screen.activeScreen) {
-
     case HOME_SCREEN:
     {
       float change = map((millis()-lasttargetTemperatureRead),0,100,5,1);
       change = constrain(change,1,10);
       change /= 10;
       if (rotaryValue > rotaryValueOld) {
-        targetTemp += change;
+        targetTemperature += change;
       }
       else if (rotaryValue < rotaryValueOld) {
-        targetTemp -= change;
+        targetTemperature -= change;
       }
-      targetTemp = constrain(targetTemp,0,30);
+      targetTemperature = constrain(targetTemperature,0,30);
       lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
       lasttargetTemperatureRead = millis();
       Screen.addSidebarIcon(THERMOMETER_ICON);
-      Screen.homeScreen(targetTemp);
+      Screen.homeScreen(targetTemperature);
       break;
     }
 
@@ -291,6 +294,7 @@ void OpenThermostat::readRotary()
   rotaryValueOld = rotaryValue;
 }
 
+//Check if the rotary button has been pressed
 void OpenThermostat::readButton()
 {
   int reading = analogRead(BUT_PIN);
@@ -329,7 +333,7 @@ void OpenThermostat::readButton()
       break;
 
       case VALUE_SCREEN:
-      Screen.menuScreen(activeMenu);
+        Screen.menuScreen(activeMenu);
       break;
     }
   }
@@ -404,44 +408,63 @@ float OpenThermostat::getAvgTemperature()
 }
 
 //Check the current schedule and checks if it needs to start heating
-void OpenThermostat::checkSchedule() {
-  bool scheduleActive = false;
+void OpenThermostat::checkHeating() {
+  if ((millis() - lastHeatingCheck) > heatingCheckInterval) {
+    bool scheduleActive = false;
 
-  for (uint8_t i = 0; i < scheduleLength; i++) {
-    if (time >= schedule[i][0] && time < schedule[i][1]) {
+    for (uint8_t i = 0; i < scheduleLength; i++) {
+      if (time >= schedule[i][0] && time < schedule[i][1]) {
 
-      targetTemp = schedule[i][2];
-      Serial.println(targetTemp);
-      scheduleActive = true;
-      break;
+        targetTemperature = schedule[i][2];
+        scheduleActive = true;
+        break;
+      }
     }
-  }
 
-  //If there is no active module default to resting temperature
-  if (!scheduleActive) {
-    targetTemp = restingTemp;
-    Serial.println("Resting");
-  }
+    //If there is no active module default to resting temperature
+    if (!scheduleActive) {
+      targetTemperature = restingTemp;
+    }
 
-  if ((targetTemp-temperature) > 0.2) {
-    heatingOn(true);
-  } else {
-    heatingOn(false);
+    //If the temperature dips below the target temperature
+    if (targetTemperature > temperature && temperature != 0) {
+      heatingOn(true);
+    } else {
+      heatingOn(false);
+    }
+
+    //If the current temperature is lower that the old dip temperature
+    if (temperature < dipTemperature) {
+      dipTemperature = temperature;
+      dipTime        = millis();
+    }
+
+    lastHeatingCheck = millis();
   }
 }
 
 void OpenThermostat::heatingOn(bool _heating) {
   if (_heating && ((millis() - lastHeating) > heatingInterval) && heating == false) {
+    Serial.println("Starting heating");
     Screen.addSidebarIcon(HEATING_ICON);
     digitalWrite(HEATING_PIN,HIGH);
 
-    lastHeating = millis();
+    lastHeating      = millis(); //To check the heating interval
+    heatingStartTime = millis(); //To calculate the duration of the heating session
+    dipTime          = millis(); //Set the time of the heating dip to the current time
+
+    startTemperature = temperature;
+    dipTemperature   = temperature;
+
     heating = true;
   }
   else if (!_heating && heating == true) {
+    Serial.println("Stopped heating");
     Screen.removeSidebarIcon(HEATING_ICON);
     digitalWrite(HEATING_PIN,LOW);
 
+    //When a heating session is done, set a flag to send the heating data to the dashboard
+    postData(HEATING_POST);
     heating = false;
   }
 }
@@ -491,13 +514,34 @@ void OpenThermostat::postData(uint8_t type)
 
   switch(type) {
     case TEMPERATURE_POST:
-      url += "post_data.php";
+      Serial.println("Posting average temperature");
+      url += "post_data";
 
       data += "thermostat_identifier=";
       data += idCode;
-
       data += "&temperature=";
       data += getAvgTemperature();
+      data += "&data=";
+      data += "temperature";
+      break;
+    case HEATING_POST:
+      Serial.println("Posting heating");
+      url += "post_data";
+
+      data += "thermostat_identifier=";
+      data += idCode;
+      data += "&startTemperature=";
+      data += startTemperature;
+      data += "&dipTemperature=";
+      data += dipTemperature;
+      data += "&targetTemperature=";
+      data += targetTemperature;
+      data += "&heatingTime=";
+      data += (millis()-heatingStartTime)/1000;
+      data += "&dipTime=";
+      data += (dipTime-heatingStartTime)/1000;
+      data += "&data=";
+      data += "heating";
       break;
   }
 
@@ -508,6 +552,14 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Type: application/x-www-form-urlencoded\r\n" +
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
+
+  Serial.println("POST return:");
+
+   while (client.connected()) {
+     String line = client.readStringUntil('\n');
+
+      Serial.println(line);
+   }
 }
 
 void OpenThermostat::getData(uint8_t type)
@@ -531,7 +583,7 @@ void OpenThermostat::getData(uint8_t type)
       url += "&temperature=";
       url += temperature;
       url += "&thermostat_target=";
-      url += targetTemp;
+      url += targetTemperature;
       url += "&thermostat_identifier=";
       url += idCode;
       break;
@@ -573,7 +625,6 @@ void OpenThermostat::getData(uint8_t type)
           time              = jsonResponse["time"];
 
           if (scheduleAvailable == 1) {
-
             scheduleLength = jsonResponse["len"];
 
             for (uint8_t i = 0; i < scheduleLength; i++) {
@@ -585,7 +636,7 @@ void OpenThermostat::getData(uint8_t type)
               int end    = module[1];
               float temp = module[2];
 
-              //Times 15 to go from quarters to minutes
+              //Multiply by 15 to go from quarters to minutes
               start *= 15;
               end   *= 15;
               end   += start;
@@ -594,8 +645,8 @@ void OpenThermostat::getData(uint8_t type)
               schedule[i][1] = end;
               schedule[i][2] = temp;
             }
+            lastHeatingCheck = 0; //Forces checking of the schedule
           }
-          checkSchedule();
           break;
         case GET_SETTINGS:
           tempCorrection  = jsonResponse["temp_correction"];
@@ -613,4 +664,5 @@ void OpenThermostat::getData(uint8_t type)
       }
     }
   }
+  yield();
 }

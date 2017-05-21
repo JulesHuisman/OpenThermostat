@@ -1,4 +1,4 @@
-/*
+ /*
   Created by Daan van Driel and Jules Huisman, March 25, 2017.
   Released into the public domain.
   V1.0
@@ -20,9 +20,6 @@
 extern "C" {
 #include "gpio.h"
 }
-
-#define DEBUG_ESP_SSL
-#define DEBUG_SSL
 
 class OpenThermostat
 {
@@ -46,7 +43,7 @@ class OpenThermostat
     void EEPROM_readID();
     float getAvgTemperature();
     void addAvgTemperature(float _temperature);
-    void checkSchedule();
+    void checkHeating();
     void heatingOn(bool _heating);
     void postTemperatureAvg();
     void getSchedule();
@@ -58,21 +55,26 @@ class OpenThermostat
     ESP8266WebServer webServer;
     unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
     unsigned long lastTemperatureRead,temperatureReadInterval;
-    unsigned long lasttargetTemperatureRead,targetTemperatureInterval;
+    unsigned long lasttargetTemperatureRead,targetTemperatureeratureInterval;
     unsigned long lastButtonRead,buttonReadInterval;
     unsigned long lastTemperaturePost,temperaturePostInterval;
     unsigned long lastTemperatureAvg,temperatureAvgInterval;
     unsigned long lastScheduleGet,scheduleGetInterval;
     unsigned long lastSettingsGet,settingsGetInterval;
     unsigned long lastHeating,heatingInterval;
+    unsigned long lastHeatingCheck,heatingCheckInterval;
     int previous;
     int time;
     int scheduleLength;
     float schedule[24][3];
     float restingTemp;
-    float targetTemp;
+    float targetTemperature;
     float tempCorrection;
     bool heating;
+    float startTemperature;
+    float dipTemperature;
+    unsigned long dipTime;
+    unsigned long heatingStartTime;
     int minTemp;
     int maxTemp;
     uint8_t tempMode;
