@@ -21,6 +21,7 @@ OpenThermostat::OpenThermostat()
   wifiStrengthReadInterval         = 60000; //How often to read wifi strength (60 s)
   temperatureReadInterval          = 4000; //How often to get the indoor temperature (10 s)
   targetTemperatureeratureInterval = 2500; //How long to display the set temperature (2.5 s)
+  menuInterval                     = 5000; //How long to display the menu (5 s)
   temperaturePostInterval          = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval           = 60000; //The time between adding to average temperature (1 min)
   scheduleGetInterval              = 60000; //How often to post and get the temperature and target temperature (1 min)
@@ -71,6 +72,9 @@ void OpenThermostat::run()
    readRotary();
    readButton();
    checkHeating();
+   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval) {
+     Screen.homeScreen(temperature);
+   }
 }
 
 void OpenThermostat::connectWIFI()
@@ -287,6 +291,7 @@ void OpenThermostat::readRotary()
       if (activeMenu >= Screen.menuLength) activeMenu = 0;
       else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
 
+      lastMenuRead = millis();
       Screen.menuScreen(activeMenu);
       break;
     }
@@ -306,6 +311,7 @@ void OpenThermostat::readButton()
     //Check the current screen
     switch (Screen.activeScreen) {
       case HOME_SCREEN:
+      lastMenuRead = millis();
       Screen.menuScreen(0);
       break;
 

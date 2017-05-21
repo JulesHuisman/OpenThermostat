@@ -63,6 +63,7 @@ class OpenThermostat
     unsigned long lastSettingsGet,settingsGetInterval;
     unsigned long lastHeating,heatingInterval;
     unsigned long lastHeatingCheck,heatingCheckInterval;
+    unsigned long lastMenuRead, menuInterval;
     int previous;
     int time;
     int scheduleLength;
