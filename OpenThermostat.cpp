@@ -520,7 +520,6 @@ void OpenThermostat::postData(uint8_t type)
 
   switch(type) {
     case TEMPERATURE_POST:
-      Serial.println("Posting average temperature");
       url += "post_data";
 
       data += "thermostat_identifier=";
@@ -531,7 +530,6 @@ void OpenThermostat::postData(uint8_t type)
       data += "temperature";
       break;
     case HEATING_POST:
-      Serial.println("Posting heating");
       url += "post_data";
 
       data += "thermostat_identifier=";
@@ -559,13 +557,13 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
 
-  Serial.println("POST return:");
-
-   while (client.connected()) {
-     String line = client.readStringUntil('\n');
-
-      Serial.println(line);
-   }
+  // Serial.println("POST return:");
+  //
+  //  while (client.connected()) {
+  //    String line = client.readStringUntil('\n');
+  //
+  //     Serial.println(line);
+  //  }
 }
 
 void OpenThermostat::getData(uint8_t type)
@@ -670,5 +668,4 @@ void OpenThermostat::getData(uint8_t type)
       }
     }
   }
-  yield();
 }
