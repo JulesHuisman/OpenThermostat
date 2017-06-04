@@ -64,15 +64,21 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
+  if(offlineMode != true)
+  {
+    postTemperatureAvg();
+    getSchedule();
+    getSettings();
+  }
    getWifiStrength();
    readTemperature();
-   postTemperatureAvg();
-   getSchedule();
-   getSettings();
    readRotary();
    readButton();
    checkHeating();
-   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval) {
+
+   //Returns to showing the homeScreen after inactivity in the menu.
+   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
+   {
      Screen.homeScreen(temperature);
    }
 }
@@ -104,13 +110,28 @@ void OpenThermostat::connectWIFI()
       getStartupSettings();
       break;
 
-    //If unable to connect start an access point
+    //If unable to connect choose between offline mode or start an access point
     case WL_NO_SSID_AVAIL:
-      setupAP();
 
-      //Loop the access point to poll for user input
-      while(accesPointActive) runAP();
-      break;
+      offlineMode = true;
+      screen.offlineModeOption = true;
+      //Draw menu with offlineMode option
+      Screen.menuScreen(0);
+      //Wait for the user to choose an option
+      while(buttonClicked) {
+        readButton();
+        readRotary();
+      }
+
+      if(offlineMode != true)
+      {
+        setupAP();
+
+        //Loop the access point to poll for user input
+        while(accesPointActive) runAP();
+        break;
+    }
+    //Else continue in offlineMode
   }
 }
 
@@ -317,24 +338,35 @@ void OpenThermostat::readButton()
 
       case MENU_SCREEN:
       //Check the current main menu item
-      switch (Screen.activeMenu) {
-        case MAIN_MENU_RETURN:
-          Screen.homeScreen(temperature);
+      if(offlineMode != true) {
+        switch (Screen.activeMenu) {
+          case MAIN_MENU_RETURN:
+            Screen.homeScreen(temperature);
+            break;
+          case MAIN_MENU_UPDATES:
+            break;
+          case MAIN_MENU_ID:
+            Screen.valueScreen("ID Code",idCode);
+            break;
+          case MAIN_MENU_UNIT:
+            char *unitType;
+            if (tempMode == 0) unitType = "C";
+            else if (tempMode == 1) unitType = "F";
+            Screen.valueScreen("Unit",unitType);
+            break;
+          case MAIN_MENU_VERSION:
+            Screen.valueScreen("Version",version);
+            break;
+          }
+      } else {
+        switch (Screen.activeMenu) {
+          case OFFLINE_MODE:
+            //continue with offlineMode true
           break;
-        case MAIN_MENU_UPDATES:
+          case ACCES_POINT:
+            offlineMode = false;
           break;
-        case MAIN_MENU_ID:
-          Screen.valueScreen("ID Code",idCode);
-          break;
-        case MAIN_MENU_UNIT:
-          char *unitType;
-          if (tempMode == 0) unitType = "C";
-          else if (tempMode == 1) unitType = "F";
-          Screen.valueScreen("Unit",unitType);
-          break;
-        case MAIN_MENU_VERSION:
-          Screen.valueScreen("Version",version);
-          break;
+        }
       }
       break;
 
@@ -342,7 +374,9 @@ void OpenThermostat::readButton()
         Screen.menuScreen(activeMenu);
       break;
     }
+    buttonClicked = true;
   }
+  buttonClicked = false;
   previous = reading;
 }
 

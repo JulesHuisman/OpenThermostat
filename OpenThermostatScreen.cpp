@@ -235,7 +235,12 @@ void OpenThermostatScreen::menuScreen(uint8_t active)
       cursorX = 15;
     }
 
-    write(menuItems[i],strlen(menuItems[i]),2);
+    if(offlineModeOption != true)
+    {
+      write(menuItems[i],strlen(menuItems[i]),2);
+    } else {
+      write(menuItems2[i],strlen(menuItems2[i]),2);
+    }
   }
 
   activeMenu = active;

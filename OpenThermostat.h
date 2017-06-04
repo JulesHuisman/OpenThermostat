@@ -27,6 +27,7 @@ class OpenThermostat
     OpenThermostat();
     void begin();
     void run();
+    bool offlineMode;
   private:
     void connectWIFI();
     void getStartupSettings();
@@ -95,6 +96,7 @@ class OpenThermostat
     static long rotaryValue;
     long rotaryValueOld;
     bool accesPointActive;
+    bool buttonClicked;
     const char* host = "dashboard.open-thermostat.com";
     const int httpsPort = 443;
     const char* fingerprint = "9a fb 23 8b b7 d0 6b ab 3d 21 d9 6e 5e 3a a1 55 84 1d d4 82";

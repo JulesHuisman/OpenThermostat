@@ -38,6 +38,9 @@
 #define MAIN_MENU_ID      2
 #define MAIN_MENU_UNIT    3
 #define MAIN_MENU_VERSION 4
+//Define all the offlineMode menu items
+#define OFFLINE_MODE  0
+#define ACCES_POINT   1
 
 //Define the different type of HTTP posts and gets
 #define TEMPERATURE_POST     0
