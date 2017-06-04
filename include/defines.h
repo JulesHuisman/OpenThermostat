@@ -42,6 +42,9 @@
 #define OFFLINE_MODE  0
 #define ACCES_POINT   1
 
+#define MAIN_MENU_LENGTH   5
+#define OFFLINE_MODE_MENU_LENGTH   2
+
 //Define the different type of HTTP posts and gets
 #define TEMPERATURE_POST     0
 #define HEATING_POST         1

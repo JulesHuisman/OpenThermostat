@@ -42,7 +42,6 @@ void OpenThermostat::begin()
   Screen.begin();
   Dht.begin();
   EEPROM.begin(16);
-    WiFi.begin("sdfs","dsfdf");
 
   //Get the ID code for this thermostat and save it in a variable
   EEPROM_readID();
@@ -119,7 +118,7 @@ void OpenThermostat::connectWIFI()
       //Draw menu with offlineMode option
       Screen.menuScreen(0);
       //Wait for the user to choose an option
-      while(buttonClicked) {
+      while(buttonClicked == false) {
         readButton();
         readRotary();
       }
@@ -309,6 +308,12 @@ void OpenThermostat::readRotary()
         activeMenu-=1;
       }
 
+      if(Screen.offlineModeOption == false){
+        Screen.menuLength = MAIN_MENU_LENGTH;
+      } else {
+        Screen.menuLength = OFFLINE_MODE_MENU_LENGTH;
+      }
+
       //Wrap the cursor if it goes out of bounds
       if (activeMenu >= Screen.menuLength) activeMenu = 0;
       else if (activeMenu < 0) activeMenu = (Screen.menuLength-1);
@@ -339,7 +344,7 @@ void OpenThermostat::readButton()
 
       case MENU_SCREEN:
       //Check the current main menu item
-      if(offlineMode != true) {
+      if(Screen.offlineModeOption == false) {
         switch (Screen.activeMenu) {
           case MAIN_MENU_RETURN:
             Screen.homeScreen(temperature);
@@ -362,7 +367,8 @@ void OpenThermostat::readButton()
       } else {
         switch (Screen.activeMenu) {
           case OFFLINE_MODE:
-            //continue with offlineMode true
+            //Disable the offlineModeOption menu items
+            Screen.offlineModeOption = false;
           break;
           case ACCES_POINT:
             offlineMode = false;
@@ -377,7 +383,6 @@ void OpenThermostat::readButton()
     }
     buttonClicked = true;
   }
-  buttonClicked = false;
   previous = reading;
 }
 
