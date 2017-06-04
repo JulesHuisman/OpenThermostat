@@ -42,6 +42,7 @@ void OpenThermostat::begin()
   Screen.begin();
   Dht.begin();
   EEPROM.begin(16);
+    WiFi.begin("sdfs","dsfdf");
 
   //Get the ID code for this thermostat and save it in a variable
   EEPROM_readID();
@@ -64,7 +65,7 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
-  if(offlineMode != true)
+  if(offlineMode == false)
   {
     postTemperatureAvg();
     getSchedule();
@@ -114,7 +115,7 @@ void OpenThermostat::connectWIFI()
     case WL_NO_SSID_AVAIL:
 
       offlineMode = true;
-      screen.offlineModeOption = true;
+      Screen.offlineModeOption = true;
       //Draw menu with offlineMode option
       Screen.menuScreen(0);
       //Wait for the user to choose an option
