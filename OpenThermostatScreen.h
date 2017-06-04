@@ -5,6 +5,9 @@
 
   Based on the Adafruit library for the SSD1306
   https://github.com/adafruit/Adafruit_SSD1306
+
+  And SH1106 driver library
+  https://github.com/rene-mt/esp8266-oled-sh1106
 */
 
 #ifndef Screen_h
@@ -17,6 +20,9 @@
 extern "C" {
   #include<user_interface.h>
 }
+
+//#define SSD1306
+#define SH1106
 
 class OpenThermostatScreen
 {

@@ -557,13 +557,13 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
 
-  // Serial.println("POST return:");
-  //
-  //  while (client.connected()) {
-  //    String line = client.readStringUntil('\n');
-  //
-  //     Serial.println(line);
-  //  }
+  Serial.println("POST return:");
+
+   while (client.connected()) {
+     String line = client.readStringUntil('\n');
+
+      Serial.println(line);
+   }
 }
 
 void OpenThermostat::getData(uint8_t type)

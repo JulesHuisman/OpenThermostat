@@ -1,4 +1,4 @@
- /*
+  /*
   Created by Daan van Driel and Jules Huisman, March 25, 2017.
   Released into the public domain.
   V1.0
@@ -18,7 +18,7 @@
 #include "OpenThermostatDht.h";
 #include "include/defines.h";
 extern "C" {
-#include "gpio.h"
+ #include "gpio.h"
 }
 
 class OpenThermostat

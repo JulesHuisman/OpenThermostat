@@ -269,18 +269,36 @@ void OpenThermostatScreen::drawIcon(int16_t x, int16_t y, uint8_t icon, uint8_t 
 //Updates the display and sends the screen buffer to the SSD1306
 void OpenThermostatScreen::display() {
   sendCommand(0x21);
-  sendCommand(0);
-  sendCommand(127);
+  sendCommand(0x00);
+  sendCommand(0x7F);
   sendCommand(0x22);
-  sendCommand(0);
-  sendCommand(7);
+  sendCommand(0x00);
+  sendCommand(0x07);
 
-  digitalWrite(CS_PIN, HIGH);
-  digitalWrite(DC_PIN, HIGH);
-  digitalWrite(CS_PIN, LOW);
+  #ifdef SSD1306
+    digitalWrite(CS_PIN, HIGH);
+    digitalWrite(DC_PIN, HIGH);
+    digitalWrite(CS_PIN, LOW);
 
-  for (uint16_t i=0; i<1024; i++)
-    SPI.transfer(screenBuffer[i]);
+    for (uint16_t i=0; i<1024; i++)
+      SPI.transfer(screenBuffer[i]);
+  #endif
+
+  #ifdef SH1106
+    sendCommand(0x40 | 0x00);
+
+    for (uint8_t page = 0; page < 64/8; page++) {
+      for (uint8_t col = 2; col < 130; col++) {
+        sendCommand(0xB0 + page);
+        sendCommand(col & 0xF);
+        sendCommand(0x10 | (col >> 4));
+        digitalWrite(CS_PIN, HIGH);
+        digitalWrite(DC_PIN, HIGH);
+        digitalWrite(CS_PIN, LOW);
+        SPI.transfer(screenBuffer[col-2 + page*128]);
+      }
+    }
+  #endif
 
   digitalWrite(CS_PIN, HIGH);
 }
@@ -360,9 +378,9 @@ void OpenThermostatScreen::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t 
     }
 }
 
-// Sends a byte to the SSD1306
+// Sends a byte to the screen
 void OpenThermostatScreen::sendCommand(uint8_t byte)
- {
+{
   digitalWrite(CS_PIN, HIGH);
   digitalWrite(DC_PIN, LOW);
   digitalWrite(CS_PIN, LOW);
