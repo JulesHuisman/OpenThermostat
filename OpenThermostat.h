@@ -7,16 +7,16 @@
 #ifndef OpenThermostat_h
 #define OpenThermostat_h
 
-#include <ESP8266WiFi.h>;
-#include <DNSServer.h>;
-#include <ESP8266WebServer.h>;
-#include <WiFiClientSecure.h>;
-#include <EEPROM.h>;
-#include <ArduinoJson.h>;
-#include "Arduino.h";
-#include "OpenThermostatScreen.h";
-#include "OpenThermostatDht.h";
-#include "include/defines.h";
+#include <ESP8266WiFi.h>
+#include <DNSServer.h>
+#include <ESP8266WebServer.h>
+#include <WiFiClientSecure.h>
+#include <EEPROM.h>
+#include <ArduinoJson.h>
+#include "Arduino.h"
+#include "OpenThermostatScreen.h"
+#include "OpenThermostatDht.h"
+#include "include/defines.h"
 extern "C" {
  #include "gpio.h"
 }
@@ -56,7 +56,7 @@ class OpenThermostat
     ESP8266WebServer webServer;
     unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
     unsigned long lastTemperatureRead,temperatureReadInterval;
-    unsigned long lasttargetTemperatureRead,targetTemperatureeratureInterval;
+    unsigned long lastTargetTemperatureRead,targetTemperatureReadInterval;
     unsigned long lastButtonRead,buttonReadInterval;
     unsigned long lastTemperaturePost,temperaturePostInterval;
     unsigned long lastTemperatureAvg,temperatureAvgInterval;

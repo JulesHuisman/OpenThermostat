@@ -44,8 +44,8 @@ class OpenThermostatScreen
     uint8_t activeMenu;
     uint8_t sidebarIcons[3];
     uint8_t menuLength;
-    char *menuItems[6] = {"Return", "Update","ID Code","Unit","Version"};
-    char *menuItems2[3] = {"Offline","AP",""};
+    char *mainMenuItems[6] = {"Return", "Update","ID Code","Unit","Version"};
+    char *modeMenuItems[3] = {"Offline","AP",""};
     bool offlineModeOption;
   private:
     void write(char text[], uint8_t length, uint8_t size);

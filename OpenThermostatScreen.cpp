@@ -50,7 +50,7 @@ void OpenThermostatScreen::clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 //Create a screen with a textfield and a loading bar
 void OpenThermostatScreen::loadScreen(char text[])
 {
-  size_t len = strlen(text);
+  size_t length = strlen(text);
 
   //If load screen is already active only redraw the text
   if (activeScreen == LOAD_SCREEN) {
@@ -68,10 +68,10 @@ void OpenThermostatScreen::loadScreen(char text[])
     drawLine(14,57,14,35);
   }
 
-  cursorX = (128-(6*len))/2; //Center the text
+  cursorX = (128-(6*length))/2; //Center the text
   cursorY = 13;
 
-  write(text, len, 1);
+  write(text, length, 1);
 
   display();
 }
@@ -132,7 +132,7 @@ void OpenThermostatScreen::homeScreen(float value)
 
   //If home screen is already active only redraw the value
   if (activeScreen == HOME_SCREEN) {
-    clear(0,18,113,64);
+    clear(0,5,113,64);
   } else {
     activeScreen = HOME_SCREEN;
 
@@ -141,10 +141,15 @@ void OpenThermostatScreen::homeScreen(float value)
     drawSidebar();
   }
 
-  cursorX = 15+(8*(4-valueLen));
-  cursorY = 18;
+  cursorX = 23+(8*(4-valueLen));
+  cursorY = 7;
 
-  write(valueChar, len, 4);
+  write(valueChar, len, 3);
+
+  cursorX = 33+(8*(4-valueLen));
+  cursorY = 42;
+
+  write(valueChar, len, 2);
 
   display();
 }
@@ -235,11 +240,11 @@ void OpenThermostatScreen::menuScreen(uint8_t active)
       cursorX = 15;
     }
 
-    if(offlineModeOption != true)
+    if(offlineModeOption == false)
     {
-      write(menuItems[i],strlen(menuItems[i]),2);
+      write(mainMenuItems[i],strlen(mainMenuItems[i]),2);
     } else {
-      write(menuItems2[i],strlen(menuItems2[i]),2);
+      write(modeMenuItems[i],strlen(modeMenuItems[i]),2);
     }
   }
 

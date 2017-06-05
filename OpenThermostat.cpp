@@ -19,8 +19,8 @@ OpenThermostat::OpenThermostat()
   previous = 0;
 
   wifiStrengthReadInterval         = 60000; //How often to read wifi strength (60 s)
-  temperatureReadInterval          = 4000; //How often to get the indoor temperature (10 s)
-  targetTemperatureeratureInterval = 2500; //How long to display the set temperature (2.5 s)
+  temperatureReadInterval          = 10000; //How often to get the indoor temperature (10 s)
+  targetTemperatureReadInterval    = 2500; //How long to display the set temperature (2.5 s)
   menuInterval                     = 5000; //How long to display the menu (5 s)
   temperaturePostInterval          = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval           = 60000; //The time between adding to average temperature (1 min)
@@ -64,23 +64,23 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
+  getWifiStrength();
+  readTemperature();
   if(offlineMode == false)
   {
     postTemperatureAvg();
     getSchedule();
     getSettings();
   }
-   getWifiStrength();
-   readTemperature();
-   readRotary();
-   readButton();
-   checkHeating();
+  readRotary();
+  readButton();
+  checkHeating();
 
-   //Returns to showing the homeScreen after inactivity in the menu.
-   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
-   {
-     Screen.homeScreen(temperature);
-   }
+  //Returns to showing the homeScreen after inactivity in the menu.
+  if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
+  {
+   Screen.homeScreen(temperature);
+  }
 }
 
 void OpenThermostat::connectWIFI()
@@ -123,7 +123,7 @@ void OpenThermostat::connectWIFI()
         readRotary();
       }
 
-      if(offlineMode != true)
+      if(offlineMode == false)
       {
         setupAP();
 
@@ -137,7 +137,6 @@ void OpenThermostat::connectWIFI()
 
 void OpenThermostat::getStartupSettings()
 {
-  Screen.loadScreen("Fetching settings");
   getData(GET_SETTINGS);
   delay(5);
   getData(GET_SCHEDULE);
@@ -249,9 +248,10 @@ void OpenThermostat::getWifiStrength()
 void OpenThermostat::readTemperature()
 {
   //Only read the temperature every 10 seconds and user is not setting the target temperature
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lasttargetTemperatureRead) > targetTemperatureeratureInterval)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lastTargetTemperatureRead) > targetTemperatureReadInterval)
   {
     float _temperature = Dht.readTemperature(tempMode);
+    Serial.println(_temperature);
 
     //Only save the temperature if it read correctly
     if (!isnan(_temperature)) {
@@ -278,13 +278,17 @@ void OpenThermostat::readTemperature()
 //Check if the rotary has been turned
 void OpenThermostat::readRotary()
 {
+  //If the rotary has not been turned, return
   if (rotaryValue == rotaryValueOld) return;
 
+  //Check which screen is active
   switch (Screen.activeScreen) {
+    //If the home screen is active change the target temperature
     case HOME_SCREEN:
     {
-      float change = map((millis()-lasttargetTemperatureRead),0,100,5,1);
-      change = constrain(change,1,10);
+      //Change the target temperature quicker if the rotary is turned faster
+      float change = map((millis()-lastTargetTemperatureRead),0,100,3,1);
+      change = constrain(change,1,3);
       change /= 10;
       if (rotaryValue > rotaryValueOld) {
         targetTemperature += change;
@@ -292,9 +296,13 @@ void OpenThermostat::readRotary()
       else if (rotaryValue < rotaryValueOld) {
         targetTemperature -= change;
       }
-      targetTemperature = constrain(targetTemperature,0,30);
-      lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning
-      lasttargetTemperatureRead = millis();
+
+      targetTemperature = constrain(targetTemperature,0,30); //TODO change for fahrenheit
+
+      lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning the rotary
+      lastTargetTemperatureRead = millis();
+
+      //Add a thermometer icon when setting the temperature
       Screen.addSidebarIcon(THERMOMETER_ICON);
       Screen.homeScreen(targetTemperature);
       break;
