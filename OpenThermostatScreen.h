@@ -33,7 +33,7 @@ class OpenThermostatScreen
     void loadScreen(char text[]);
     void loadScreenRefresh();
     void valueScreen(char title[], char value[]);
-    void homeScreen(float value);
+    void homeScreen(float firstValue, float secondValue);
     void addSidebarIcon(uint8_t icon);
     void removeSidebarIcon(uint8_t icon);
     void drawSidebar();

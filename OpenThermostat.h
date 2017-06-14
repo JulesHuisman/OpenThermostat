@@ -37,6 +37,7 @@ class OpenThermostat
     void submitForm();
     void getWifiStrength();
     void readTemperature();
+    void checkTargetTemperature();
     void readButton();
     void readRotary();
     static void PinA();
@@ -71,6 +72,7 @@ class OpenThermostat
     float schedule[24][3];
     float restingTemp;
     float targetTemperature;
+    bool targetTemperatureChanged;
     float tempCorrection;
     bool heating;
     float startTemperature;

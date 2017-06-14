@@ -57,7 +57,7 @@ void OpenThermostat::begin()
 
   connectWIFI();
 
-  Screen.homeScreen(0);
+  Screen.homeScreen(0,0);
 
 }
 
@@ -72,6 +72,7 @@ void OpenThermostat::run()
     getSchedule();
     getSettings();
   }
+  checkTargetTemperature();
   readRotary();
   readButton();
   checkHeating();
@@ -79,7 +80,7 @@ void OpenThermostat::run()
   //Returns to showing the homeScreen after inactivity in the menu.
   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
   {
-   Screen.homeScreen(temperature);
+   Screen.homeScreen(temperature, targetTemperature);
   }
 }
 
@@ -140,6 +141,7 @@ void OpenThermostat::getStartupSettings()
   getData(GET_SETTINGS);
   delay(5);
   getData(GET_SCHEDULE);
+  Screen.homeScreen(temperature,targetTemperature);
 }
 
 //Get the active SSID name and convert it to a character array
@@ -247,11 +249,9 @@ void OpenThermostat::getWifiStrength()
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  //Only read the temperature every 10 seconds and user is not setting the target temperature
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval && (millis() - lastTargetTemperatureRead) > targetTemperatureReadInterval)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval)
   {
     float _temperature = Dht.readTemperature(tempMode);
-    Serial.println(_temperature);
 
     //Only save the temperature if it read correctly
     if (!isnan(_temperature)) {
@@ -261,7 +261,7 @@ void OpenThermostat::readTemperature()
 
     //Only draw the temperature if the home screen is active
     if (Screen.activeScreen == HOME_SCREEN) {
-      Screen.homeScreen(temperature);
+      Screen.homeScreen(temperature, targetTemperature);
       Screen.removeSidebarIcon(THERMOMETER_ICON);
     }
 
@@ -270,8 +270,16 @@ void OpenThermostat::readTemperature()
       addAvgTemperature(temperature);
       lastTemperatureAvg = millis();
     }
+  }
+}
 
-    lastTemperatureRead = millis();
+//Checks if the temperature has been set
+void OpenThermostat::checkTargetTemperature()
+{
+  if ((millis() - lastTargetTemperatureRead) > targetTemperatureReadInterval && targetTemperatureChanged == true)
+  {
+    Serial.println("Target Changed");
+    targetTemperatureChanged = false;
   }
 }
 
@@ -283,6 +291,7 @@ void OpenThermostat::readRotary()
 
   //Check which screen is active
   switch (Screen.activeScreen) {
+
     //If the home screen is active change the target temperature
     case HOME_SCREEN:
     {
@@ -290,24 +299,21 @@ void OpenThermostat::readRotary()
       float change = map((millis()-lastTargetTemperatureRead),0,100,3,1);
       change = constrain(change,1,3);
       change /= 10;
-      if (rotaryValue > rotaryValueOld) {
-        targetTemperature += change;
-      }
-      else if (rotaryValue < rotaryValueOld) {
-        targetTemperature -= change;
-      }
+
+      if (rotaryValue > rotaryValueOld)      targetTemperature += change;
+      else if (rotaryValue < rotaryValueOld) targetTemperature -= change;
 
       targetTemperature = constrain(targetTemperature,0,30); //TODO change for fahrenheit
 
       lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning the rotary
       lastTargetTemperatureRead = millis();
+      targetTemperatureChanged = true;
 
-      //Add a thermometer icon when setting the temperature
-      Screen.addSidebarIcon(THERMOMETER_ICON);
-      Screen.homeScreen(targetTemperature);
+      Screen.homeScreen(temperature, targetTemperature);
       break;
     }
 
+    //If the menu is active scroll through the items
     case MENU_SCREEN:
     {
       if (rotaryValue > rotaryValueOld) {
@@ -338,7 +344,7 @@ void OpenThermostat::readRotary()
 void OpenThermostat::readButton()
 {
   int reading = analogRead(BUT_PIN);
-  delay(3); //Delay needed to keep wifi connected
+  delay(3); //Delay needed to keep wifi connected (esp8266 bug)
 
   if ((millis() - lastButtonRead) > buttonReadInterval && previous < 20 && reading > 200) {
     lastButtonRead = millis();
@@ -355,7 +361,7 @@ void OpenThermostat::readButton()
       if(Screen.offlineModeOption == false) {
         switch (Screen.activeMenu) {
           case MAIN_MENU_RETURN:
-            Screen.homeScreen(temperature);
+            Screen.homeScreen(temperature, targetTemperature);
             break;
           case MAIN_MENU_UPDATES:
             break;
@@ -429,6 +435,7 @@ void OpenThermostat::EEPROM_readID()
 
 void OpenThermostat::addAvgTemperature(float _temperature)
 {
+  //Convert to fahrenheit
   if (tempMode) {
     _temperature = ((_temperature - 32) * 5)/9;
   }
@@ -525,7 +532,7 @@ void OpenThermostat::heatingOn(bool _heating) {
 
 void OpenThermostat::postTemperatureAvg()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0) {
       postData(TEMPERATURE_POST);
 
       lastTemperaturePost = millis();
@@ -604,8 +611,6 @@ void OpenThermostat::postData(uint8_t type)
                "Content-Type: application/x-www-form-urlencoded\r\n" +
                "Content-Length: " + data.length() + "\r\n\r\n" +
                ""+data+"\r\n");
-
-  Serial.println("POST return:");
 
    while (client.connected()) {
      String line = client.readStringUntil('\n');

@@ -118,17 +118,25 @@ void OpenThermostatScreen::valueScreen(char title[], char value[])
 }
 
 //Draw the home screen
-void OpenThermostatScreen::homeScreen(float value)
+void OpenThermostatScreen::homeScreen(float firstValue, float secondValue)
 {
-  uint8_t valueLen;
+  uint8_t firstValueLength  = 4;
+  uint8_t secondValueLength = 4;
 
-  if (value < 10) valueLen = 3;
-  else if (value >= 10 || value < 0) valueLen = 4;
+  //If the length of the value is between 0 and 10 the character count is 3
+  if (firstValue >= 0 && firstValue < 10) firstValueLength = 3;
+  if (secondValue >= 0 && secondValue < 10) secondValueLength = 3;
 
-  char valueChar[valueLen];
-  dtostrf(value, valueLen, 1, valueChar);
+  //Create a character array to store the float values
+  char firstValueChar[firstValueLength];
+  char secondValueChar[secondValueLength];
 
-  size_t len = strlen(valueChar);
+  //Convert the float to character arrays
+  dtostrf(firstValue, firstValueLength, 1, firstValueChar);
+  dtostrf(secondValue, secondValueLength, 1, secondValueChar);
+
+  size_t firstLength  = strlen(firstValueChar);
+  size_t secondLength = strlen(secondValueChar);
 
   //If home screen is already active only redraw the value
   if (activeScreen == HOME_SCREEN) {
@@ -141,15 +149,17 @@ void OpenThermostatScreen::homeScreen(float value)
     drawSidebar();
   }
 
-  cursorX = 23+(8*(4-valueLen));
+  //Draw the main value
+  cursorX = 23+(8*(4-firstValueLength));
   cursorY = 7;
 
-  write(valueChar, len, 3);
+  write(firstValueChar, firstLength, 3);
 
-  cursorX = 33+(8*(4-valueLen));
+  //Draw the secondary value
+  cursorX = 31+(8*(4-secondValueLength));
   cursorY = 42;
 
-  write(valueChar, len, 2);
+  write(secondValueChar, secondLength, 2);
 
   display();
 }
