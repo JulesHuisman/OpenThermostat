@@ -1,9 +1,16 @@
-
 //Define the pins the screen is connected to, the other two screen pins are SPI hardware pins
 #define CS_PIN      15
 #define DC_PIN      5
 #define RST_PIN     0
 #define HEATING_PIN 2
+
+//DHT pin
+#define DHT_PIN 3
+
+//Rotary encoder pins
+#define ROTA_PIN 0
+#define ROTB_PIN 4
+#define BUT_PIN  A0
 
 //Define the different screens that exist
 #define LOAD_SCREEN  1
@@ -19,18 +26,11 @@
 #define DEGREE_ICON      5
 #define HEATING_ICON     6
 #define THERMOMETER_ICON 7
+#define NO_INTERNET_ICON 8
 
 //Define the different temperature modes
 #define CELCIUS    0
 #define FAHRENHEIT 1
-
-//DHT pin
-#define DHT_PIN 3
-
-//Rotary encoder pins
-#define ROTA_PIN 4
-#define ROTB_PIN 12
-#define BUT_PIN  A0
 
 //Define all the main menu items
 #define MAIN_MENU_RETURN  0

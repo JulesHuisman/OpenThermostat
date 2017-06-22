@@ -235,7 +235,7 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false) {
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
@@ -249,7 +249,7 @@ void OpenThermostat::getWifiStrength()
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && targetTemperatureChanged == false)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -505,34 +505,38 @@ void OpenThermostat::checkHeating() {
 }
 
 void OpenThermostat::heatingOn(bool _heating) {
-  if (_heating && ((millis() - lastHeating) > heatingInterval) && heating == false) {
-    Serial.println("Starting heating");
-    Screen.addSidebarIcon(HEATING_ICON);
-    digitalWrite(HEATING_PIN,HIGH);
+  if (targetTemperatureChanged == false)
+  {
+    if (_heating && ((millis() - lastHeating) > heatingInterval) && heating == false)
+    {
+      Serial.println("Starting heating");
+      Screen.addSidebarIcon(HEATING_ICON);
+      digitalWrite(HEATING_PIN,HIGH);
 
-    lastHeating      = millis(); //To check the heating interval
-    heatingStartTime = millis(); //To calculate the duration of the heating session
-    dipTime          = millis(); //Set the time of the heating dip to the current time
+      lastHeating      = millis(); //To check the heating interval
+      heatingStartTime = millis(); //To calculate the duration of the heating session
+      dipTime          = millis(); //Set the time of the heating dip to the current time
 
-    startTemperature = temperature;
-    dipTemperature   = temperature;
+      startTemperature = temperature;
+      dipTemperature   = temperature;
 
-    heating = true;
-  }
-  else if (!_heating && heating == true) {
-    Serial.println("Stopped heating");
-    Screen.removeSidebarIcon(HEATING_ICON);
-    digitalWrite(HEATING_PIN,LOW);
+      heating = true;
+    }
+    else if (!_heating && heating == true) {
+      Serial.println("Stopped heating");
+      Screen.removeSidebarIcon(HEATING_ICON);
+      digitalWrite(HEATING_PIN,LOW);
 
-    //When a heating session is done, set a flag to send the heating data to the dashboard
-    postData(HEATING_POST);
-    heating = false;
+      //When a heating session is done, set a flag to send the heating data to the dashboard
+      postData(HEATING_POST);
+      heating = false;
+    }
   }
 }
 
 void OpenThermostat::postTemperatureAvg()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0 && targetTemperatureChanged == false) {
       postData(TEMPERATURE_POST);
 
       lastTemperaturePost = millis();
@@ -542,7 +546,7 @@ void OpenThermostat::postTemperatureAvg()
 //Posts the current indoor temperature, server returns schedule if available
 void OpenThermostat::getSchedule()
 {
-  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0) {
+  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0 && targetTemperatureChanged == false) {
       getData(GET_SCHEDULE);
 
       lastScheduleGet = millis();
@@ -551,7 +555,7 @@ void OpenThermostat::getSchedule()
 
 void OpenThermostat::getSettings()
 {
-  if ((millis() - lastSettingsGet) > settingsGetInterval) {
+  if ((millis() - lastSettingsGet) > settingsGetInterval && targetTemperatureChanged == false) {
       getData(GET_SETTINGS);
 
       lastSettingsGet = millis();
