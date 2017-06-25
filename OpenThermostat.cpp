@@ -127,12 +127,13 @@ void OpenThermostat::connectWIFI()
       if(offlineMode == false)
       {
         setupAP();
-
         //Loop the access point to poll for user input
         while(accesPointActive) runAP();
         break;
+
+      } else if(offlineMode == true){
+        Screen.addSidebarIcon(NO_INTERNET_ICON);
     }
-    //Else continue in offlineMode
   }
 }
 
