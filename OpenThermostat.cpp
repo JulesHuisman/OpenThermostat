@@ -43,6 +43,8 @@ void OpenThermostat::begin()
   Dht.begin();
   EEPROM.begin(16);
 
+  Serial.setDebugOutput(true);
+
   //Get the ID code for this thermostat and save it in a variable
   EEPROM_readID();
 
@@ -236,7 +238,7 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false && WiFi.status() == WL_CONNECTED) {
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
