@@ -66,6 +66,7 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
+  Serial.println(Screen.activeScreen);
   getWifiStrength();
   readTemperature();
   if(offlineMode == false)
@@ -83,7 +84,10 @@ void OpenThermostat::run()
   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
   {
    Screen.homeScreen(temperature, targetTemperature);
-  }
+ } else if (Screen.activeScreen == VALUE_SCREEN && (millis() - lastMenuRead) > menuInterval)
+ {
+   Screen.homeScreen(temperature, targetTemperature);
+ }
 }
 
 void OpenThermostat::connectWIFI()
@@ -238,11 +242,15 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false && WiFi.status() == WL_CONNECTED) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false) {
+    if(WiFi.status() == WL_CONNECTED){
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
     Screen.sidebarIcons[0] = strength; //Set the corresponding wifi icon
+  } else {
+    Screen.sidebarIcons[0] = NO_INTERNET_ICON;
+  }
     Screen.drawSidebar();
 
     lastWifiStrengthRead = millis();
@@ -392,10 +400,12 @@ void OpenThermostat::readButton()
           break;
         }
       }
+      lastMenuRead = millis();
       break;
 
       case VALUE_SCREEN:
         Screen.menuScreen(activeMenu);
+        lastMenuRead = millis();
       break;
     }
     buttonClicked = true;
