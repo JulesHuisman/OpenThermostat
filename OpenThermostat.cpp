@@ -165,6 +165,8 @@ void OpenThermostat::setupAP()
   IPAddress AccessDG = IPAddress(10, 10, 10, 1);
   IPAddress AccessSN = IPAddress(255, 255, 255, 0);
 
+  const byte DNS_PORT = 53;
+
   String HTML =
   F("<!DOCTYPE html>"
   "<html>"
@@ -203,10 +205,12 @@ void OpenThermostat::setupAP()
   WiFi.softAPConfig(AccessIP, AccessDG, AccessSN);
   WiFi.softAP("OpenThermostat");
 
+  dnsServer.start(DNS_PORT, "*", AccessIP);
+
   Screen.valueScreen("Connect to","OpenThermostat");
 
   //Draw the login page
-  webServer.on("/", [=](){
+  webServer.onNotFound([=](){
     webServer.send(200, "text/html", HTML);
     Screen.loadScreen("Device connected");
   });
@@ -226,7 +230,7 @@ void OpenThermostat::runAP()
   if (wifi_softap_get_station_num() > 0) {
       Screen.valueScreen("Visit","10.10.10.1");
   }
-
+  dnsServer.processNextRequest();
   webServer.handleClient();
 }
 

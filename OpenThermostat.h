@@ -55,6 +55,7 @@ class OpenThermostat
     OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
+    DNSServer dnsServer;
     unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
     unsigned long lastTemperatureRead,temperatureReadInterval;
     unsigned long lastTargetTemperatureRead,targetTemperatureReadInterval;
