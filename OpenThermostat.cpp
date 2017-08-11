@@ -66,7 +66,6 @@ void OpenThermostat::begin()
 //The loop function of the library
 void OpenThermostat::run()
 {
-  Serial.println(Screen.activeScreen);
   getWifiStrength();
   readTemperature();
   if(offlineMode == false)
@@ -246,7 +245,7 @@ void OpenThermostat::submitForm() {
 //Get the wifi strength and draw the corresponding icon
 void OpenThermostat::getWifiStrength()
 {
-  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanged == false) {
+  if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN && targetTemperatureChanging == false) {
     if(WiFi.status() == WL_CONNECTED){
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
@@ -264,7 +263,7 @@ void OpenThermostat::getWifiStrength()
 //Reads the current temperature and prints it to the home screen
 void OpenThermostat::readTemperature()
 {
-  if ((millis() - lastTemperatureRead) > temperatureReadInterval && targetTemperatureChanged == false)
+  if ((millis() - lastTemperatureRead) > temperatureReadInterval && targetTemperatureChanging == false)
   {
     float _temperature = Dht.readTemperature(tempMode);
 
@@ -288,13 +287,57 @@ void OpenThermostat::readTemperature()
   }
 }
 
-//Checks if the temperature has been set
+//Checks if the target temperature has been set
 void OpenThermostat::checkTargetTemperature()
 {
-  if ((millis() - lastTargetTemperatureRead) > targetTemperatureReadInterval && targetTemperatureChanged == true)
+  if ((millis() - lastTargetTemperatureRead) > targetTemperatureReadInterval && targetTemperatureChanging == true)
   {
-    Serial.println("Target Changed");
-    targetTemperatureChanged = false;
+    //Send the target temperature to the dashboard
+    postData(TARGET_TEMPERATURE);
+
+    bool activeModule = false;
+
+    //Loop through all the modules
+    for (uint8_t i = 0; i < scheduleLength; i++)
+    {
+      if (time >= schedule[i][0] && time < schedule[i][1])
+      {
+        //If an active module is found change its temperature
+        schedule[i][2] = targetTemperature;
+        activeModule = true;
+        break;
+      }
+    }
+    if (!activeModule)
+    {
+      int nextMinute = 1440; //End of the delay
+
+      //Loop through all the modules
+      for (uint8_t i = 0; i < scheduleLength; i++)
+      {
+        if (time < int(schedule[i][0]) && int(schedule[i][0]) < nextMinute) {
+          nextMinute = schedule[i][0];
+        }
+      }
+      schedule[scheduleLength][0] = time-1;
+      schedule[scheduleLength][1] = nextMinute;
+      schedule[scheduleLength][2] = targetTemperature;
+      scheduleLength++;
+    }
+
+    Serial.println("");
+    Serial.println("Schedule:");
+    Serial.println("");
+    for (uint8_t i = 0; i < scheduleLength; i++)
+    {
+      Serial.print(schedule[i][0]);
+      Serial.print(" - ");
+      Serial.print(schedule[i][1]);
+      Serial.print(" - ");
+      Serial.println(schedule[i][2]);
+    }
+
+    targetTemperatureChanging = false;
   }
 }
 
@@ -322,9 +365,10 @@ void OpenThermostat::readRotary()
 
       lastTemperatureRead = 0; //Forces a temperature redraw after 2.5 seconds of turning the rotary
       lastTargetTemperatureRead = millis();
-      targetTemperatureChanged = true;
+      targetTemperatureChanging = true;
 
       Screen.homeScreen(temperature, targetTemperature);
+      Serial.println();
       break;
     }
 
@@ -337,7 +381,7 @@ void OpenThermostat::readRotary()
         activeMenu-=1;
       }
 
-      if(Screen.offlineModeOption == false){
+      if (Screen.offlineModeOption == false) {
         Screen.menuLength = MAIN_MENU_LENGTH;
       } else {
         Screen.menuLength = OFFLINE_MODE_MENU_LENGTH;
@@ -487,9 +531,11 @@ float OpenThermostat::getAvgTemperature()
 
 //Check the current schedule and checks if it needs to start heating
 void OpenThermostat::checkHeating() {
-  if ((millis() - lastHeatingCheck) > heatingCheckInterval) {
+  if ((millis() - lastHeatingCheck) > heatingCheckInterval && targetTemperatureChanging == false) {
+    //Flag for an active module
     bool scheduleActive = false;
 
+    //Loop through all the modules
     for (uint8_t i = 0; i < scheduleLength; i++) {
       if (time >= schedule[i][0] && time < schedule[i][1]) {
 
@@ -522,7 +568,7 @@ void OpenThermostat::checkHeating() {
 }
 
 void OpenThermostat::heatingOn(bool _heating) {
-  if (targetTemperatureChanged == false)
+  if (targetTemperatureChanging == false)
   {
     if (_heating && ((millis() - lastHeating) > heatingInterval) && heating == false)
     {
@@ -544,7 +590,7 @@ void OpenThermostat::heatingOn(bool _heating) {
       Screen.removeSidebarIcon(HEATING_ICON);
       digitalWrite(HEATING_PIN,LOW);
 
-      //When a heating session is done, set a flag to send the heating data to the dashboard
+      //When a heating session is done, send the heating data to the dashboard
       postData(HEATING_POST);
       heating = false;
     }
@@ -553,7 +599,7 @@ void OpenThermostat::heatingOn(bool _heating) {
 
 void OpenThermostat::postTemperatureAvg()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0 && targetTemperatureChanged == false) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0 && targetTemperatureChanging == false) {
       postData(TEMPERATURE_POST);
 
       lastTemperaturePost = millis();
@@ -563,7 +609,7 @@ void OpenThermostat::postTemperatureAvg()
 //Posts the current indoor temperature, server returns schedule if available
 void OpenThermostat::getSchedule()
 {
-  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0 && targetTemperatureChanged == false) {
+  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0 && targetTemperatureChanging == false) {
       getData(GET_SCHEDULE);
 
       lastScheduleGet = millis();
@@ -572,7 +618,7 @@ void OpenThermostat::getSchedule()
 
 void OpenThermostat::getSettings()
 {
-  if ((millis() - lastSettingsGet) > settingsGetInterval && targetTemperatureChanged == false) {
+  if ((millis() - lastSettingsGet) > settingsGetInterval && targetTemperatureChanging == false) {
       getData(GET_SETTINGS);
 
       lastSettingsGet = millis();
@@ -622,6 +668,16 @@ void OpenThermostat::postData(uint8_t type)
       data += (dipTime-heatingStartTime)/1000;
       data += "&data=";
       data += "heating";
+      break;
+    case TARGET_TEMPERATURE:
+      url += "post_data";
+
+      data += "thermostat_identifier=";
+      data += idCode;
+      data += "&targetTemperature=";
+      data += targetTemperature;
+      data += "&data=";
+      data += "target_temperature";
       break;
   }
 
@@ -686,7 +742,7 @@ void OpenThermostat::getData(uint8_t type)
 
       const char *json = line.c_str();
 
-      JsonObject& jsonResponse = jsonBuffer.parseObject(json, 2);
+      JsonObject& jsonResponse = jsonBuffer.parseObject(json);
 
       // Test if parsing succeeds
       if (!jsonResponse.success()) {
@@ -705,10 +761,10 @@ void OpenThermostat::getData(uint8_t type)
           if (scheduleAvailable == 1) {
             scheduleLength = jsonResponse["len"];
 
+            JsonArray& moduleArray = jsonResponse["schedule"];
+
             for (uint8_t i = 0; i < scheduleLength; i++) {
-              String key = "";
-              key += String(i);
-              JsonArray& module = jsonResponse[""+key+""];
+              JsonArray& module = moduleArray[i]; //A single module
 
               int start  = module[0];
               int end    = module[1];

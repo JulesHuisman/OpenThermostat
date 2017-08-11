@@ -46,7 +46,8 @@
 #define OFFLINE_MODE_MENU_LENGTH   2
 
 //Define the different type of HTTP posts and gets
-#define TEMPERATURE_POST     0
-#define HEATING_POST         1
-#define GET_SCHEDULE         2
-#define GET_SETTINGS         3
+#define TEMPERATURE_POST   0
+#define HEATING_POST       1
+#define GET_SCHEDULE       2
+#define GET_SETTINGS       3
+#define TARGET_TEMPERATURE 4

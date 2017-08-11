@@ -73,7 +73,7 @@ class OpenThermostat
     float schedule[24][3];
     float restingTemp;
     float targetTemperature;
-    bool targetTemperatureChanged;
+    bool targetTemperatureChanging;
     float tempCorrection;
     bool heating;
     float startTemperature;
