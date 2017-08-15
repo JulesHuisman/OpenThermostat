@@ -34,16 +34,16 @@
 
 //Define all the main menu items
 #define MAIN_MENU_RETURN  0
-#define MAIN_MENU_UPDATES 1
+#define MAIN_MENU_UPDATE  1
 #define MAIN_MENU_ID      2
-#define MAIN_MENU_UNIT    3
-#define MAIN_MENU_VERSION 4
-//Define all the offlineMode menu items
-#define OFFLINE_MODE  0
-#define ACCES_POINT   1
+#define MAIN_MENU_VERSION 3
 
-#define MAIN_MENU_LENGTH   5
-#define OFFLINE_MODE_MENU_LENGTH   2
+//Define all the offlineMode menu items
+#define OFFLINE_MODE 0
+#define ACCES_POINT  1
+
+#define MAIN_MENU_LENGTH         4
+#define OFFLINE_MODE_MENU_LENGTH 2
 
 //Define the different type of HTTP posts and gets
 #define TEMPERATURE_POST   0
@@ -51,3 +51,4 @@
 #define GET_SCHEDULE       2
 #define GET_SETTINGS       3
 #define TARGET_TEMPERATURE 4
+#define VERSION_POST       5

@@ -167,7 +167,7 @@ void OpenThermostatScreen::homeScreen(float firstValue, float secondValue)
 //Add a icon at the bottom of the sidebar
 void OpenThermostatScreen::addSidebarIcon(uint8_t icon)
 {
-  for (uint8_t i = 0; i < sizeof(sidebarIcons); i++)
+  for (uint8_t i = 1; i < sizeof(sidebarIcons); i++)
   {
     //If the icon is already drawn, break
     if (sidebarIcons[i] == icon) break;

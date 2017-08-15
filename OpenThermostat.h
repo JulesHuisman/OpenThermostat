@@ -11,6 +11,8 @@
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
 #include <WiFiClientSecure.h>
+#include <ESP8266HTTPClient.h>
+#include <ESP8266httpUpdate.h>
 #include <EEPROM.h>
 #include <ArduinoJson.h>
 #include "Arduino.h"
@@ -30,11 +32,12 @@ class OpenThermostat
     bool offlineMode;
   private:
     void connectWIFI();
-    void getStartupSettings();
+    void getStartup();
     void getSSID();
     void setupAP();
     void runAP();
     void submitForm();
+    void update();
     void getWifiStrength();
     void readTemperature();
     void checkTargetTemperature();
@@ -87,8 +90,9 @@ class OpenThermostat
     float temperatureArray[15];
     char SSID[32];
     char *idCode = "0000000000000000";
-    char *version = "0.0.0";
-    uint8_t updateAvailable;
+    char *version = "1.0.0";
+    int versionNumber = 100;
+    int latestFirmware;
     int8_t activeMenu;
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
