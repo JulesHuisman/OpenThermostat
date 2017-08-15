@@ -248,14 +248,19 @@ void OpenThermostat::submitForm()
 
 void OpenThermostat::update()
 {
-  if (versionNumber >= latestFirmware) return;
+  if (versionNumber >= latestFirmware) {
+    Screen.valueScreen("No update available", "");
+    return;
+  }
+  else {
+    Screen.valueScreen("Updating", "Reset after 30s");
 
-  //char *url =
+    String url = "http://dashboard.open-thermostat.com/firmware/";
+    url       += String(latestFirmware);
+    url       += ".bin";
 
-  //Screen.valueScreen("Updating");
-
-  delay(100);
-  t_httpUpdate_return ret = ESPhttpUpdate.update("http://dashboard.open-thermostat.com/firmware/200.bin");
+    t_httpUpdate_return ret = ESPhttpUpdate.update(url);
+  }
 }
 
 //Get the wifi strength and draw the corresponding icon
@@ -263,13 +268,14 @@ void OpenThermostat::getWifiStrength()
 {
   if ((millis() - lastWifiStrengthRead) > wifiStrengthReadInterval && Screen.activeScreen == HOME_SCREEN) {
     if(WiFi.status() == WL_CONNECTED){
-    uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
-    strength = constrain(strength,1,3);
+      uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
+      strength = constrain(strength,1,3);
 
-    Screen.sidebarIcons[0] = strength; //Set the corresponding wifi icon
-  } else {
-    Screen.sidebarIcons[0] = NO_INTERNET_ICON;
-  }
+      Screen.sidebarIcons[0] = strength; //Set the corresponding wifi icon
+    }
+    else {
+      Screen.sidebarIcons[0] = NO_INTERNET_ICON;
+    }
     Screen.drawSidebar();
 
     lastWifiStrengthRead = millis();
