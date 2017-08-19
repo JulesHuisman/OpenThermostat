@@ -22,6 +22,7 @@ OpenThermostat::OpenThermostat()
   temperatureReadInterval       = 10000;  //How often to get the indoor temperature (10 s)
   targetTemperatureReadInterval = 2500;   //How long to display the set temperature (2.5 s)
   menuInterval                  = 5000;   //How long to display the menu (5 s)
+  menuItemInterval              = 15000;  //How long to display a menu item (15 s)
   temperaturePostInterval       = 900000; //The time between temperature posts (15 min)
   temperatureAvgInterval        = 60000;  //The time between adding to average temperature (1 min)
   scheduleGetInterval           = 60000;  //How often to post and get the temperature and target temperature (1 min)
@@ -82,7 +83,7 @@ void OpenThermostat::run()
   if(Screen.activeScreen == MENU_SCREEN && (millis() - lastMenuRead) > menuInterval)
   {
    Screen.homeScreen(temperature, targetTemperature);
- } else if (Screen.activeScreen == VALUE_SCREEN && (millis() - lastMenuRead) > menuInterval)
+ } else if (Screen.activeScreen == VALUE_SCREEN && (millis() - lastMenuRead) > menuItemInterval)
  {
    Screen.homeScreen(temperature, targetTemperature);
  }
