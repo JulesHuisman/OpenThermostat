@@ -606,7 +606,7 @@ void OpenThermostat::heatingOn(bool _heating)
 
 void OpenThermostat::postTemperatureAvg()
 {
-  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(getAvgTemperature()) != 0 && temperature != 0 && targetTemperatureChanging == false) {
+  if ((millis() - lastTemperaturePost) > temperaturePostInterval && int(temperature) != 0 && targetTemperatureChanging == false) {
       postData(TEMPERATURE_POST);
 
       lastTemperaturePost = millis();
@@ -616,7 +616,7 @@ void OpenThermostat::postTemperatureAvg()
 //Posts the current indoor temperature, server returns schedule if available
 void OpenThermostat::getSchedule()
 {
-  if ((millis() - lastScheduleGet) > scheduleGetInterval && temperature != 0 && targetTemperatureChanging == false) {
+  if ((millis() - lastScheduleGet) > scheduleGetInterval && int(temperature) != 0 && targetTemperatureChanging == false) {
       getData(GET_SCHEDULE);
 
       lastScheduleGet = millis();
@@ -654,7 +654,7 @@ void OpenThermostat::postData(uint8_t type)
       data += "thermostat_identifier=";
       data += idCode;
       data += "&temperature=";
-      data += getAvgTemperature();
+      data += (getAvgTemperature() - tempCorrection); //Reverse temperature correction
       data += "&data=";
       data += "temperature";
       break;
@@ -736,7 +736,7 @@ void OpenThermostat::getData(uint8_t type)
     case GET_SCHEDULE:
       url += "get_data?data=schedule";
       url += "&temperature=";
-      url += temperature;
+      url += (temperature - tempCorrection); //Reverse temperature correction
       url += "&thermostat_target=";
       url += targetTemperature;
       url += "&thermostat_identifier=";
