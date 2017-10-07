@@ -1,11 +1,11 @@
 //Define the pins the screen is connected to, the other two screen pins are SPI hardware pins
 #define CS_PIN      15 //15 - 15
-#define DC_PIN      5  //5 - 3
-#define RST_PIN     0  //0 - 5
-#define HEATING_PIN 2 //2 - 12
+#define DC_PIN      3  //5 - 3
+#define RST_PIN     5  //0 - 5
+#define HEATING_PIN 12 //2 - 12
 
 //DHT pin
-#define DHT_PIN 3 //3 - 2
+#define DHT_PIN 2 //3 - 2
 
 //Rotary encoder pins
 #define ROTA_PIN 0 //0 - 0

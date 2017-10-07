@@ -21,7 +21,7 @@ extern "C" {
   #include<user_interface.h>
 }
 
-//#define SSD1306
+// #define SSD1306
 #define SH1106
 
 class OpenThermostatScreen
