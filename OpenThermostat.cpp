@@ -688,9 +688,6 @@ void OpenThermostat::postData(uint8_t type)
       break;
 
     case VERSION_POST:
-    Serial.println("version");
-    Serial.println(versionNumber);
-    Serial.println();
       url += "post_data";
 
       data += "thermostat_identifier=";
