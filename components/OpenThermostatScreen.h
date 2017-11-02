@@ -18,8 +18,10 @@
 #include "include/defines.h"
 #include "include/graphics.h"
 extern "C" {
-  #include<user_interface.h>
+  #include <user_interface.h>
 }
+
+//Here you can set the screen driver your oled screen has
 
 // #define SSD1306
 #define SH1106
