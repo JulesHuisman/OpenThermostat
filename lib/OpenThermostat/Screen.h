@@ -13,13 +13,10 @@
 #ifndef Screen_h
 #define Screen_h
 
-#include <SPI.h>;
-#include "Arduino.h";
-#include "include/defines.h"
-#include "include/graphics.h"
-extern "C" {
-  #include <user_interface.h>
-}
+#include <Arduino.h>
+#include <include/defines.h>
+#include <include/graphics.h>
+#include <SPI.h>
 
 //Here you can set the screen driver your oled screen has
 

@@ -1,4 +1,4 @@
-#include "OpenThermostatDht.h"
+#include "Dht.h"
 
 #define MIN_INTERVAL 2000
 

@@ -1,12 +1,12 @@
   /*
   Created by Daan van Driel and Jules Huisman, March 25, 2017.
   Released into the public domain.
-  V1.0
 */
 
 #ifndef OpenThermostat_h
 #define OpenThermostat_h
 
+#include <Arduino.h>
 #include <ESP8266WiFi.h>
 #include <DNSServer.h>
 #include <ESP8266WebServer.h>
@@ -15,10 +15,13 @@
 #include <ESP8266httpUpdate.h>
 #include <EEPROM.h>
 #include <ArduinoJson.h>
-#include "Arduino.h"
-#include "components/OpenThermostatScreen.h"
-#include "components/OpenThermostatDht.h"
-#include "include/defines.h"
+
+#include <include/defines.h>
+
+#include <Screen.h>
+#include <Dht.h>
+
+
 extern "C" {
  #include "gpio.h"
 }

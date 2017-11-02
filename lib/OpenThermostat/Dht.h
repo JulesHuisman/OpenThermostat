@@ -6,11 +6,11 @@
   Modified to suit the OpenThermosat Library
 */
 
-#ifndef OpenThermostatDht_H
-#define OpenThermostatDht_H
+#ifndef Dht_H
+#define Dht_H
 
-#include "Arduino.h"
-#include "include/defines.h"
+#include <Arduino.h>
+#include <include/defines.h>
 
 class OpenThermostatDht {
   public:

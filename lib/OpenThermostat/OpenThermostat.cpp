@@ -1,4 +1,4 @@
-#include "OpenThermostat.h";
+#include "OpenThermostat.h"
 
 long OpenThermostat::rotaryValue = 0;
 volatile uint8_t OpenThermostat::aFlag = 0;
@@ -229,10 +229,10 @@ void OpenThermostat::setupAP()
 
 void OpenThermostat::runAP()
 {
-  //If a device is connected show the IP address
-  if (wifi_softap_get_station_num() > 0) {
-      Screen.valueScreen("Visit","10.10.10.1");
-  }
+  // //If a device is connected show the IP address
+  // if (wifi_softap_get_station_num() > 0) {
+  //     Screen.valueScreen("Visit","10.10.10.1");
+  // }
   dnsServer.processNextRequest();
   webServer.handleClient();
 }
