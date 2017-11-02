@@ -16,8 +16,8 @@
 #include <EEPROM.h>
 #include <ArduinoJson.h>
 #include "Arduino.h"
-#include "OpenThermostatScreen.h"
-#include "OpenThermostatDht.h"
+#include "components/OpenThermostatScreen.h"
+#include "components/OpenThermostatDht.h"
 #include "include/defines.h"
 extern "C" {
  #include "gpio.h"
