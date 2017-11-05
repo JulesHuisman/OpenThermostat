@@ -18,8 +18,6 @@
 #include <include/graphics.h>
 #include <SPI.h>
 
-//Here you can set the screen driver your oled screen has
-
 // #define SSD1306
 #define SH1106
 
@@ -44,8 +42,6 @@ class OpenThermostatScreen
     uint8_t sidebarIcons[3];
     uint8_t menuLength;
     char *mainMenuItems[6] = {"Return", "Update","ID Code","Version"};
-    char *modeMenuItems[3] = {"Offline","AP",""};
-    bool offlineModeOption;
   private:
     void write(char text[], uint8_t length, uint8_t size);
     void drawPixel(int16_t x, int16_t y, uint8_t color);

@@ -1,6 +1,6 @@
 #include "Screen.h"
 
-#define pgm_read_byte(addr) (*(const unsigned char *)(addr))
+// #define pgm_read_byte(addr) (*(const unsigned char *)(addr))
 
 //Switch two values around
 #define _swap_int16_t(a, b) { int16_t t = a; a = b; b = t; }
@@ -250,12 +250,7 @@ void OpenThermostatScreen::menuScreen(uint8_t active)
       cursorX = 15;
     }
 
-    if(offlineModeOption == false)
-    {
-      write(mainMenuItems[i],strlen(mainMenuItems[i]),2);
-    } else {
-      write(modeMenuItems[i],strlen(modeMenuItems[i]),2);
-    }
+    write(mainMenuItems[i],strlen(mainMenuItems[i]),2);
   }
 
   activeMenu = active;
