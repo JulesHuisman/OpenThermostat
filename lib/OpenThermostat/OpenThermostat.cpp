@@ -431,17 +431,19 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_DISCONNECTED:
 			Serial.printf("[WSc] Disconnected!\n");
+      Screen.removeSidebarIcon(SOCKET_ICON);
+      Screen.drawSidebar();
 			break;
 
 		case WStype_CONNECTED: {
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
+      Screen.addSidebarIcon(SOCKET_ICON);
+      Screen.drawSidebar();
 		}
 			break;
 
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
-      Screen.addSidebarIcon(SOCKET_ICON);
-      Screen.drawSidebar();
 			break;
 
 		case WStype_BIN:
