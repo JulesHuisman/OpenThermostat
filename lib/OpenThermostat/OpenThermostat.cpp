@@ -66,6 +66,8 @@ void OpenThermostat::run()
 
   //Handle websocket connection
 	webSocket.loop();
+
+  yield();
 }
 
 /**
@@ -191,8 +193,6 @@ void OpenThermostat::setupAP()
   webServer.on("/submit", [=](){
     submitForm();
   });
-
-  accesPointActive = true;
 }
 
 /**
@@ -216,7 +216,6 @@ void OpenThermostat::submitForm()
   if (webServer.args() > 0 )
   {
     WiFi.begin(webServer.arg(0).c_str(), webServer.arg(1).c_str());
-    accesPointActive = false;
     connectWIFI();
   }
 }
@@ -229,15 +228,12 @@ void OpenThermostat::submitForm()
 void OpenThermostat::getWifiStrength()
 {
   if (timerReady(wifiStrengthTimer) && Screen.activeScreen == HOME_SCREEN) {
-
     uint8_t strength = map(WiFi.RSSI(),-80,-67,1,3);
     strength = constrain(strength,1,3);
 
     //Set the corresponding wifi icon
     Screen.sidebarIcons[0] = strength;
     Screen.drawSidebar();
-
-    wifiStrengthTimer[LAST_READ] = millis();
   }
 }
 
@@ -248,18 +244,18 @@ void OpenThermostat::getWifiStrength()
  */
 void OpenThermostat::readTemperature()
 {
+  //Don't read the temperature when the rotary is turning, as the temperature reading is blocking
+  if (rotaryTurning) return;
+
   if (timerReady(temperatureTimer))
   {
-    Serial.println("Read temp");
     float _temperature = Dht.readTemperature();
 
     //Only save the temperature if it read correctly
     if (!isnan(_temperature)) {
-      //Success reading temperature
+      //Successfully read temperature
       temperature = _temperature;
       temperature += tempCorrection;
-
-      temperatureTimer[LAST_READ] = millis();
     } else {
       //Refresh faster when failing to read temperature
       temperatureTimer[LAST_READ] = millis() + 500;
@@ -281,7 +277,13 @@ void OpenThermostat::readTemperature()
 void OpenThermostat::readRotary()
 {
   //If the rotary has not been turned, return
-  if (rotaryValue == rotaryValueOld) return;
+  if (rotaryValue == rotaryValueOld) {
+    //Set rotaryTurning to false when it was more than 1000ms ago that the rotary was turned
+    if (millis() - rotaryTimer[LAST_READ] > 1000 && rotaryTurning) rotaryTurning = false;
+    return;
+  }
+
+  rotaryTurning = true;
 
   //Check which screen is active
   switch (Screen.activeScreen)
@@ -337,13 +339,14 @@ void OpenThermostat::readRotary()
  */
 void OpenThermostat::readButton()
 {
-  int previousButtonValue = 0;
-  int currentButtonValue  = analogRead(BUT_PIN);
+  unsigned int buttonValue[2];
+
+  buttonValue[LAST]    = 0;
+  buttonValue[CURRENT] = analogRead(BUT_PIN);
   delay(3); //Delay needed to keep wifi connected (esp8266 bug)
 
   //If the button has been pressed, check the active screen
-  if (timerReady(buttonTimer) && previousButtonValue < 20 && currentButtonValue > 200) {
-    buttonTimer[LAST_READ] = millis();
+  if (timerReady(buttonTimer) && buttonValue[LAST] < 20 && buttonValue[CURRENT] > 200) {
 
     //Check the current screen
     switch (Screen.activeScreen)
@@ -374,10 +377,9 @@ void OpenThermostat::readButton()
         Screen.menuScreen(0);
       break;
     }
-    buttonClicked = true;
   }
 
-  previousButtonValue = currentButtonValue;
+  buttonValue[LAST] = buttonValue[CURRENT];
 }
 
 /**
@@ -425,7 +427,6 @@ void OpenThermostat::PinB()
  */
 void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t length)
 {
-
 	switch(type) {
 
 		case WStype_DISCONNECTED:
@@ -439,6 +440,7 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
+      this->checkPayload(payload);
 			break;
 
 		case WStype_BIN:
@@ -447,6 +449,11 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 			break;
 
 	}
+}
+
+void checkPayload(uint8_t * payload)
+{
+  Serial.printf("[Payload] got text: %s\n", payload);
 }
 
 /**
@@ -458,8 +465,13 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
  */
 bool OpenThermostat::timerReady(unsigned long timer[])
 {
-  if ((millis() - timer[LAST_READ]) > timer[READ_INTERVAL]) return true;
-  else                                                      return false;
+  if ((millis() - timer[LAST_READ]) > timer[READ_INTERVAL]) {
+    timer[LAST_READ] = millis();
+    return true;
+  }
+  else {
+    return false;
+  }
 }
 
 /**

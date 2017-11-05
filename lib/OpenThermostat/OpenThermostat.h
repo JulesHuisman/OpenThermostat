@@ -53,7 +53,9 @@ class OpenThermostat
     static void PinA();
     static void PinB();
 
-    static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+    void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+
+    void checkPayload(uint8_t * payload);
 
     bool timerReady(unsigned long timer[]);
     void forceTimer(unsigned long timer[]);
@@ -70,11 +72,6 @@ class OpenThermostat
     unsigned long rotaryTimer[2];
     unsigned long buttonTimer[2];
 
-    // unsigned long lastWifiStrengthRead,wifiStrengthReadInterval;
-    // unsigned long lastTemperatureRead,temperatureReadInterval;
-    // unsigned long lastTargetTemperatureRead,targetTemperatureReadInterval;
-    // unsigned long lastButtonRead,buttonReadInterval;
-
     float temperature;
     float targetTemperature;
     float tempCorrection;
@@ -88,10 +85,11 @@ class OpenThermostat
     static volatile uint8_t oldEncPos;
     static volatile uint8_t readingA;
     static volatile uint8_t readingB;
+
     static long rotaryValue;
     long rotaryValueOld;
-    bool accesPointActive;
-    bool buttonClicked;
+
+    bool rotaryTurning;
 };
 
 #endif

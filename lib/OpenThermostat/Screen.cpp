@@ -48,7 +48,7 @@ void OpenThermostatScreen::clear(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 }
 
 //Create a screen with a textfield and a loading bar
-void OpenThermostatScreen::loadScreen(char text[])
+void OpenThermostatScreen::loadScreen(const char text[])
 {
   size_t length = strlen(text);
 
@@ -93,7 +93,7 @@ void OpenThermostatScreen::loadScreenRefresh()
 }
 
 //Draw a screen with a title and a value
-void OpenThermostatScreen::valueScreen(char title[], char value[])
+void OpenThermostatScreen::valueScreen(const char title[], const char value[])
 {
   activeScreen = VALUE_SCREEN;
 
@@ -318,7 +318,7 @@ void OpenThermostatScreen::display() {
   digitalWrite(CS_PIN, HIGH);
 }
 
-void OpenThermostatScreen::write(char text[], uint8_t length, uint8_t size)
+void OpenThermostatScreen::write(const char text[], uint8_t length, uint8_t size)
 {
   for (uint8_t i = 0; i < length; i++) {
     //Shift the characters if there is a dot or comma (saves space)

@@ -27,9 +27,9 @@ class OpenThermostatScreen
     OpenThermostatScreen();
     void begin();
     void display();
-    void loadScreen(char text[]);
+    void loadScreen(const char text[]);
     void loadScreenRefresh();
-    void valueScreen(char title[], char value[]);
+    void valueScreen(const char title[], const char value[]);
     void homeScreen(float firstValue, float secondValue);
     void addSidebarIcon(uint8_t icon);
     void removeSidebarIcon(uint8_t icon);
@@ -41,9 +41,9 @@ class OpenThermostatScreen
     uint8_t activeMenu;
     uint8_t sidebarIcons[3];
     uint8_t menuLength;
-    char *mainMenuItems[6] = {"Return", "Update","ID Code","Version"};
+    const char *mainMenuItems[6] = {"Return", "Update","ID Code","Version"};
   private:
-    void write(char text[], uint8_t length, uint8_t size);
+    void write(const char text[], uint8_t length, uint8_t size);
     void drawPixel(int16_t x, int16_t y, uint8_t color);
     void drawIcon(int16_t x, int16_t y, uint8_t icon, uint8_t size);
     void drawChar(int16_t x, int16_t y, unsigned char c, uint8_t size);

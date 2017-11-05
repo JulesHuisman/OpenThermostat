@@ -27,6 +27,7 @@
 #define HEATING_ICON     6
 #define THERMOMETER_ICON 7
 #define NO_INTERNET_ICON 8
+#define SOCKET_ICON      9
 
 //Define the different temperature modes
 #define CELCIUS    0
@@ -42,3 +43,7 @@
 //Define timer array indices
 #define LAST_READ     0
 #define READ_INTERVAL 1
+
+//Define data arrays indices
+#define LAST    0
+#define CURRENT 1
