@@ -21,6 +21,12 @@ OpenThermostat::OpenThermostat()
   forceTimer(temperatureTimer);  //Forces get temperature on startup
 }
 
+/**
+ * The function that is called when the thermostat starts
+ * It sets up all the connections and pins
+ *
+ * @return void
+ */
 void OpenThermostat::begin()
 {
   Screen.begin();
@@ -46,7 +52,11 @@ void OpenThermostat::begin()
   Screen.homeScreen(0,0);
 }
 
-//The loop function of the library
+/**
+ * The loop function of the library
+ *
+ * @return void
+ */
 void OpenThermostat::run()
 {
   getWifiStrength();
@@ -58,6 +68,11 @@ void OpenThermostat::run()
 	webSocket.loop();
 }
 
+/**
+ * Connect the esp8266 to the wifi the user entered in the access point
+ *
+ * @return void
+ */
 void OpenThermostat::connectWIFI()
 {
   //Start in station mode
@@ -89,19 +104,32 @@ void OpenThermostat::connectWIFI()
   }
 }
 
+/**
+ * The function that is called on startup
+ *
+ * @return void
+ */
 void OpenThermostat::getStartup()
 {
   Screen.homeScreen(temperature,targetTemperature);
 }
 
-//Get the active SSID name and convert it to a character array
+/**
+ * Get the active SSID name and convert it to a character array
+ *
+ * @return void
+ */
 void OpenThermostat::getSSID()
 {
   String ssid = WiFi.SSID();
   strcpy(SSID, ssid.c_str());
 }
 
-//Setup the esp8266 as an access point
+/**
+ * Sets up the esp8266 as an access point so the user can enter their wifi credentials
+ *
+ * @return void
+ */
 void OpenThermostat::setupAP()
 {
   IPAddress AccessIP = IPAddress(10, 10, 10, 1);
@@ -167,12 +195,22 @@ void OpenThermostat::setupAP()
   accesPointActive = true;
 }
 
+/**
+ * Handles the access points events
+ *
+ * @return void
+ */
 void OpenThermostat::runAP()
 {
   dnsServer.processNextRequest();
   webServer.handleClient();
 }
 
+/**
+ * If the form from the access point is submitted this function is called
+ *
+ * @return void
+ */
 void OpenThermostat::submitForm()
 {
   if (webServer.args() > 0 )
@@ -183,7 +221,11 @@ void OpenThermostat::submitForm()
   }
 }
 
-//Get the wifi strength and draw the corresponding icon
+/**
+ * Get the wifi strength and draw the corresponding icon
+ *
+ * @return void
+ */
 void OpenThermostat::getWifiStrength()
 {
   if (timerReady(wifiStrengthTimer) && Screen.activeScreen == HOME_SCREEN) {
@@ -199,7 +241,11 @@ void OpenThermostat::getWifiStrength()
   }
 }
 
-//Reads the current temperature and prints it to the home screen
+/**
+ * Reads the current temperature and prints it to the home screen
+ *
+ * @return void
+ */
 void OpenThermostat::readTemperature()
 {
   if (timerReady(temperatureTimer))
@@ -226,7 +272,12 @@ void OpenThermostat::readTemperature()
   }
 }
 
-//Check if the rotary has been turned
+/**
+ * Check if the rotary has been turned
+ * If the rotary was turned check which screen is active
+ *
+ * @return void
+ */
 void OpenThermostat::readRotary()
 {
   //If the rotary has not been turned, return
@@ -278,7 +329,12 @@ void OpenThermostat::readRotary()
   rotaryValueOld = rotaryValue;
 }
 
-//Check if the rotary button has been pressed
+/**
+ * Check if the rotary button has been pressed
+ * If the button is pressed check which screen is active
+ *
+ * @return void
+ */
 void OpenThermostat::readButton()
 {
   int previousButtonValue = 0;
@@ -324,6 +380,11 @@ void OpenThermostat::readButton()
   previousButtonValue = currentButtonValue;
 }
 
+/**
+ * The function the interupt calls when rotary pin A changes
+ *
+ * @return void
+ */
 void OpenThermostat::PinA()
 {
   detachInterrupt(ROTA_PIN);
@@ -336,6 +397,11 @@ void OpenThermostat::PinA()
   attachInterrupt(ROTA_PIN, PinA, RISING);
 }
 
+/**
+ * The function the interupt calls when rotary pin B changes
+ *
+ * @return void
+ */
 void OpenThermostat::PinB()
 {
   detachInterrupt(ROTB_PIN);
