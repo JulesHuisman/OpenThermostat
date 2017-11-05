@@ -440,7 +440,8 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
-      this->checkPayload(payload);
+      Screen.addSidebarIcon(SOCKET_ICON);
+      Screen.drawSidebar();
 			break;
 
 		case WStype_BIN:

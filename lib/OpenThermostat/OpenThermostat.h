@@ -36,6 +36,8 @@ class OpenThermostat
     void run();
 
   private:
+    static OpenThermostat Thermostat;
+
     void connectWIFI();
     void getStartup();
     void getSSID();
@@ -53,14 +55,14 @@ class OpenThermostat
     static void PinA();
     static void PinB();
 
-    void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+        OpenThermostatScreen Screen;
+    static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 
     void checkPayload(uint8_t * payload);
 
     bool timerReady(unsigned long timer[]);
     void forceTimer(unsigned long timer[]);
 
-    OpenThermostatScreen Screen;
     OpenThermostatDht Dht;
     ESP8266WebServer webServer;
     DNSServer dnsServer;
