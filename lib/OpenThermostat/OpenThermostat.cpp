@@ -98,7 +98,7 @@ void OpenThermostat::connectWIFI()
   }
 
   if (WiFi.status() == WL_CONNECTED) {
-    getStartup();
+    startup();
   }
   else {
     Screen.addSidebarIcon(NO_INTERNET_ICON);
@@ -111,9 +111,11 @@ void OpenThermostat::connectWIFI()
  *
  * @return void
  */
-void OpenThermostat::getStartup()
+void OpenThermostat::startup()
 {
   Screen.homeScreen(temperature,targetTemperature);
+
+  genKey();
 }
 
 /**
@@ -431,14 +433,10 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_DISCONNECTED:
 			Serial.printf("[WSc] Disconnected!\n");
-      Screen.removeSidebarIcon(SOCKET_ICON);
-      Screen.drawSidebar();
 			break;
 
 		case WStype_CONNECTED: {
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
-      Screen.addSidebarIcon(SOCKET_ICON);
-      Screen.drawSidebar();
 		}
 			break;
 
@@ -454,9 +452,27 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 	}
 }
 
-void checkPayload(uint8_t * payload)
+/**
+ * Generate the authentication key
+ *
+ * @return void
+ */
+void OpenThermostat::genKey()
 {
-  Serial.printf("[Payload] got text: %s\n", payload);
+    BYTE hash[SHA256_BLOCK_SIZE];
+    char texthash[2*SHA256_BLOCK_SIZE+1];
+
+    Sha256* test=new Sha256();
+    BYTE text[] = "huisman.jules@gmail.com:8hk7jgivn5gfghrydjkuld7vjhjdurg6:0";
+    test->update(text, strlen((const char*)text));
+    test->final(hash);
+
+    for(int i=0; i<SHA256_BLOCK_SIZE; ++i)
+      sprintf(texthash+2*i, "%02X", hash[i]);
+
+    Serial.println();
+    Serial.print("Hash: ");
+    Serial.println(texthash);
 }
 
 /**

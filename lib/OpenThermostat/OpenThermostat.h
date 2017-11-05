@@ -17,6 +17,7 @@
 #include <ArduinoJson.h>
 #include <WebSocketsClient.h>
 #include <Hash.h>
+#include <sha256.h>
 
 #include <include/defines.h>
 
@@ -36,10 +37,8 @@ class OpenThermostat
     void run();
 
   private:
-    static OpenThermostat Thermostat;
-
     void connectWIFI();
-    void getStartup();
+    void startup();
     void getSSID();
 
     void setupAP();
@@ -57,7 +56,7 @@ class OpenThermostat
 
     static void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
 
-    void checkPayload(uint8_t * payload);
+    void genKey();
 
     bool timerReady(unsigned long timer[]);
     void forceTimer(unsigned long timer[]);
@@ -80,6 +79,11 @@ class OpenThermostat
 
     bool unit;
     char SSID[32];
+
+    unsigned long sequenceNumber = 0;
+
+    const char *email  = "huisman.jules@gmail.com";
+    const char *secret = "8hk7jgivn5gfghrydjkuld7vjhjdurg6";
 
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
