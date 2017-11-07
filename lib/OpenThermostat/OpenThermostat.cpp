@@ -33,8 +33,10 @@ void OpenThermostat::begin()
   Dht.begin();
   EEPROM.begin(16);
 
-	webSocket.begin("95.85.18.235", 8080, "/", "");
-	webSocket.onEvent(webSocketEvent);
+  connectWIFI();
+
+	webSocket.beginSSL("dashboard.open-thermostat.com", 443, "/wss/", "", "");
+  webSocket.onEvent(std::bind(&OpenThermostat::webSocketEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	webSocket.setReconnectInterval(5000);
 
   Serial.setDebugOutput(false); //Set wifi debugging
@@ -46,8 +48,6 @@ void OpenThermostat::begin()
   attachInterrupt(ROTA_PIN, PinA, RISING);
   attachInterrupt(ROTB_PIN, PinB, RISING);
   digitalWrite(HEATING_PIN,LOW);
-
-  connectWIFI();
 
   Screen.homeScreen(0,0);
 }
@@ -433,10 +433,14 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_DISCONNECTED:
 			Serial.printf("[WSc] Disconnected!\n");
+      Screen.removeSidebarIcon(SOCKET_ICON);
+      Screen.drawSidebar();
 			break;
 
 		case WStype_CONNECTED: {
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
+      Screen.addSidebarIcon(SOCKET_ICON);
+      Screen.drawSidebar();
 		}
 			break;
 
