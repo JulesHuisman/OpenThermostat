@@ -476,7 +476,7 @@ void OpenThermostat::connectWebsocket()
   StaticJsonBuffer<200> jsonBuffer;
   JsonObject& json = jsonBuffer.createObject();
 
-  json["type"]       = "dashboard";
+  json["type"]       = "thermostat";
   json["identifier"] = "administrator@email.com";
   json["key"]        = "6cdf285f3fedd95ae9ec6365f535e22bbe107feccc30cfaff24f97cda0fb8b81";
 
