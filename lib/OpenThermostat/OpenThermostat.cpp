@@ -13,6 +13,7 @@ OpenThermostat::OpenThermostat()
   tempCorrection      = 0;
   unit                = CELCIUS;
   websocketAuthorized = true;
+  //comment
 
   wifiStrengthTimer[READ_INTERVAL]      = 30000; //How often to read wifi strength (30 s)
   temperatureTimer[READ_INTERVAL]       = 10000; //How often to read the dht temperature (10 s)
