@@ -10,8 +10,9 @@ volatile uint8_t OpenThermostat::readingB;
 
 OpenThermostat::OpenThermostat()
 {
-  tempCorrection = 0;
-  unit = CELCIUS;
+  tempCorrection      = 0;
+  unit                = CELCIUS;
+  websocketAuthorized = true;
 
   wifiStrengthTimer[READ_INTERVAL]      = 30000; //How often to read wifi strength (30 s)
   temperatureTimer[READ_INTERVAL]       = 10000; //How often to read the dht temperature (10 s)
@@ -35,7 +36,8 @@ void OpenThermostat::begin()
 
   connectWIFI();
 
-	webSocket.beginSSL("dashboard.open-thermostat.com", 443, "/wss/", "", "");
+	// webSocket.beginSSL("dashboard.open-thermostat.com", 443, "/wss/", "", "");
+	webSocket.begin("192.168.0.107", 8080, "/", "");
   webSocket.onEvent(std::bind(&OpenThermostat::webSocketEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	webSocket.setReconnectInterval(5000);
 
@@ -50,6 +52,9 @@ void OpenThermostat::begin()
   digitalWrite(HEATING_PIN,LOW);
 
   Screen.homeScreen(0,0);
+
+  //Generate the websocket token
+  keygen();
 }
 
 /**
@@ -65,7 +70,7 @@ void OpenThermostat::run()
   readButton();
 
   //Handle websocket connection
-	webSocket.loop();
+  if (websocketAuthorized) webSocket.loop();
 
   yield();
 }
@@ -97,25 +102,10 @@ void OpenThermostat::connectWIFI()
     if (WiFi.status() == WL_CONNECTED) break;
   }
 
-  if (WiFi.status() == WL_CONNECTED) {
-    startup();
-  }
-  else {
+  if (WiFi.status() != WL_CONNECTED) {
     Screen.addSidebarIcon(NO_INTERNET_ICON);
     Screen.drawSidebar();
   }
-}
-
-/**
- * The function that is called on startup
- *
- * @return void
- */
-void OpenThermostat::startup()
-{
-  Screen.homeScreen(temperature,targetTemperature);
-
-  genKey();
 }
 
 /**
@@ -419,6 +409,29 @@ void OpenThermostat::PinB()
 }
 
 /**
+ * Generate the authentication key
+ *
+ * @return void
+ */
+void OpenThermostat::keygen()
+{
+    BYTE hash[SHA256_BLOCK_SIZE];
+    char texthash[2*SHA256_BLOCK_SIZE+1];
+
+    Sha256* test=new Sha256();
+    BYTE text[] = "administrator@email.com:6hk7jgivn3gfghrydjkuld7vjhjdurg6:5kj9dfk3lf8dsj3kjdf";
+    test->update(text, strlen((const char*)text));
+    test->final(hash);
+
+    for(int i=0; i<SHA256_BLOCK_SIZE; ++i)
+      sprintf(texthash+2*i, "%02X", hash[i]);
+
+    Serial.println();
+    Serial.print("Hash: ");
+    Serial.println(texthash);
+}
+
+/**
  * The websocket event watcher
  *
  * @param (WStype_t type)     -> The type of data the socket receives
@@ -439,13 +452,13 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 
 		case WStype_CONNECTED: {
 			Serial.printf("[WSc] Connected to url: %s\n", payload);
-      Screen.addSidebarIcon(SOCKET_ICON);
-      Screen.drawSidebar();
+      if (websocketAuthorized) connectWebsocket();
 		}
 			break;
 
 		case WStype_TEXT:
 			Serial.printf("[WSc] get text: %s\n", payload);
+      handlePayload(payload);
 			break;
 
 		case WStype_BIN:
@@ -456,27 +469,44 @@ void OpenThermostat::webSocketEvent(WStype_t type, uint8_t * payload, size_t len
 	}
 }
 
+void OpenThermostat::connectWebsocket()
+{
+  Serial.println("Connecting websockets");
+  //Create the json object
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.createObject();
+
+  json["type"]       = "dashboard";
+  json["identifier"] = "administrator@email.com";
+  json["key"]        = "6cdf285f3fedd95ae9ec6365f535e22bbe107feccc30cfaff24f97cda0fb8b81";
+
+  String payload;
+  json.printTo(payload);
+
+  webSocket.sendTXT(payload);
+}
+
 /**
- * Generate the authentication key
+ * This function handles the incoming payloads from the websocket connection
  *
+ * @param (uint8_t *payload) -> The payload of the websocket message
+
  * @return void
  */
-void OpenThermostat::genKey()
+void OpenThermostat::handlePayload(uint8_t *payload)
 {
-    BYTE hash[SHA256_BLOCK_SIZE];
-    char texthash[2*SHA256_BLOCK_SIZE+1];
+  StaticJsonBuffer<200> jsonBuffer;
+  JsonObject& json = jsonBuffer.parseObject(payload);
 
-    Sha256* test=new Sha256();
-    BYTE text[] = "huisman.jules@gmail.com:8hk7jgivn5gfghrydjkuld7vjhjdurg6:0";
-    test->update(text, strlen((const char*)text));
-    test->final(hash);
+  //Check if the payload is the authorization message
+  if (json.containsKey("authorized")) {
+     websocketAuthorized = json["authorized"];
 
-    for(int i=0; i<SHA256_BLOCK_SIZE; ++i)
-      sprintf(texthash+2*i, "%02X", hash[i]);
+     //If authorized add the socket icon
+     if (websocketAuthorized) Screen.addSidebarIcon(SOCKET_ICON);
 
-    Serial.println();
-    Serial.print("Hash: ");
-    Serial.println(texthash);
+     return;
+  }
 }
 
 /**

@@ -37,7 +37,6 @@ class OpenThermostat
 
   private:
     void connectWIFI();
-    void startup();
     void getSSID();
 
     void setupAP();
@@ -54,8 +53,10 @@ class OpenThermostat
     static void PinB();
 
     void webSocketEvent(WStype_t type, uint8_t * payload, size_t length);
+    void connectWebsocket();
+    void handlePayload(uint8_t * payload);
 
-    void genKey();
+    void keygen();
 
     bool timerReady(unsigned long timer[]);
     void forceTimer(unsigned long timer[]);
@@ -76,13 +77,7 @@ class OpenThermostat
     float targetTemperature;
     float tempCorrection;
 
-    bool unit;
     char SSID[32];
-
-    unsigned long sequenceNumber = 0;
-
-    const char *email  = "huisman.jules@gmail.com";
-    const char *secret = "8hk7jgivn5gfghrydjkuld7vjhjdurg6";
 
     static volatile uint8_t aFlag;
     static volatile uint8_t bFlag;
@@ -94,7 +89,9 @@ class OpenThermostat
     static long rotaryValue;
     long rotaryValueOld;
 
-    bool rotaryTurning;
+    bool rotaryTurning; //True if rotary is turning
+    bool unit; //True if unit set to celcius
+    bool websocketAuthorized; //True if the server accepted the websocket
 };
 
 #endif
