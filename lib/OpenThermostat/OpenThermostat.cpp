@@ -39,7 +39,7 @@ void OpenThermostat::begin()
 
 	// webSocket.beginSSL("dashboard.open-thermostat.com", 443, "/wss/", "", "");
 	webSocket.begin("192.168.0.107", 8080, "/", "");
-  webSocket.onEvent(std::bind(&OpenThermostat::webSocketEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
+    webSocket.onEvent(std::bind(&OpenThermostat::webSocketEvent, this, std::placeholders::_1, std::placeholders::_2, std::placeholders::_3));
 	webSocket.setReconnectInterval(5000);
 
   Serial.setDebugOutput(false); //Set wifi debugging
